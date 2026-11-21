@@ -173,6 +173,32 @@ html:not(.dp-net) #dpChatRoot{display:none!important}
 .dp-chip{margin:0;padding:3px 9px;font-size:11px;font-weight:600;border-radius:999px;background:#2c3548;color:#fff;border:1px solid #56647c}
 .dp-chip:hover{background:#3a455c}.dp-chip.on{background:#6b2f2f;border-color:#b45a5a}
 
+/* Dusty Plane: result window */
+#dpResult{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:14px;background:rgba(2,4,10,.84);backdrop-filter:blur(4px);font-family:system-ui,sans-serif;color:#f4ecdc;animation:dprIn .35s ease both}
+#dpResult[hidden]{display:none}
+.dpr-card{--dprc:#ff6b5e;width:min(540px,100%);max-height:96vh;overflow:auto;box-sizing:border-box;padding:20px 22px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.01)),#10151f;border:1px solid var(--dprc);box-shadow:0 22px 70px rgba(0,0,0,.65)}
+.dpr-card.win{--dprc:#7bdcb5}
+.dpr-badge{font-size:2.2rem;line-height:1}
+#dprTitle{margin:6px 0 2px;font-size:1.7rem;letter-spacing:.04em;color:var(--dprc)}
+#dprWhy{margin:0 0 4px;font-size:.95rem;opacity:.92}
+#dprMeta{font-size:.74rem;opacity:.6;margin-bottom:12px}
+#dprList{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.dpr-row{display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--pc,#ffb347)}
+.dpr-row.me{background:rgba(255,179,71,.12);border-color:rgba(255,179,71,.45);border-left-color:var(--pc,#ffb347)}
+.dpr-dot{flex:0 0 12px;height:12px;border-radius:50%;background:var(--pc,#ffb347);box-shadow:0 0 8px var(--pc,#ffb347)}
+.dpr-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:.88rem}
+.dpr-name small{opacity:.6;font-weight:600;margin-left:6px}
+.dpr-fc{font-weight:800;color:#ffd23f;font-variant-numeric:tabular-nums}
+.dpr-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#dpResult button{margin:0;padding:12px 10px;border-radius:12px;font-weight:800;font-size:.9rem;cursor:pointer;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#f4ecdc}
+#dpResult button:hover:not(:disabled){background:rgba(255,255,255,.16)}
+#dprCont{background:#ffb347!important;color:#241507!important;border-color:#ffb347!important}
+#dprCont:hover:not(:disabled){background:#ffc874!important}
+#dpResult button:disabled{opacity:.5;cursor:default}
+#dprHint{margin-top:10px;min-height:1.1em;text-align:center;font-size:.76rem;opacity:.75}
+@keyframes dprIn{from{opacity:0}to{opacity:1}}
+@media(max-width:520px){.dpr-card{padding:16px}.dpr-actions{grid-template-columns:1fr}}
+
 </style><style id="dpChatStyles">
 
 #dpChatRoot{position:fixed!important;right:14px;top:calc(14px + env(safe-area-inset-top,0px));z-index:2147483647!important;font-family:system-ui,sans-serif;color:#f7f4ee;pointer-events:none}
@@ -2837,7 +2863,7 @@ requestAnimationFrame(loop);
       }
       if (oldPhase !== S.ph && S.ph === 'over') {
         try {
-          const reward = Math.max(0, Number(S.earn) || 0);
+          const reward = Math.max(0, Number(S.pe && S.pe[NET.selfId] != null ? S.pe[NET.selfId] : S.earn) || 0);
           if (reward && typeof SV !== 'undefined' && typeof sv === 'function') {
             SV.fc = (Number(SV.fc) || 0) + reward;
             sv();
@@ -3413,7 +3439,7 @@ requestAnimationFrame(loop);
   // as player-scoped input instead of mutating the guest's stale snapshot.
   ['pointerdown','pointermove','pointerup','pointercancel'].forEach(type => {
     C.addEventListener(type, event => {
-      if (NET.role !== 'guest' || !NET.gameStarted || !NET.hostConn || !NET.players[NET.selfId] || NET.players[NET.selfId].mg?.k !== 'tp') return;
+      if (NET.role !== 'guest' || !NET.gameStarted || !NET.hostConn || !NET.players[NET.selfId] || NET.players[NET.selfId].mg?.k !== 'tp' || NET.lmg) return;
       const now = performance.now();
       if (type === 'pointermove' && now - NET.lastPointerSend < 28) { event.stopImmediatePropagation(); return; }
       NET.lastPointerSend = now;
@@ -3837,7 +3863,8 @@ requestAnimationFrame(loop);
     const savedMg = S.mg;
     S.mg = null; // minigames are per-player, carried in the players list
     try {
-      const packet = { t: 'snapshot', seq: ++NET.snapshotSeq, sentAt: Date.now(), state: S, players: netPlayerSnapshot() };
+      dpStampMg();
+      const packet = { t: 'snapshot', seq: ++NET.snapshotSeq, sentAt: Date.now(), state: S, players: netPlayerSnapshot(), sfx: onlyConnection ? undefined : NET.sfx.splice(0, NET.sfx.length).slice(-16) };
       for (const conn of targets) {
         const queued = conn.dataChannel && Number(conn.dataChannel.bufferedAmount || 0);
         if (!force && Number.isFinite(queued) && queued > 65536) continue; // link is behind: drop stale frame
@@ -3923,10 +3950,10 @@ requestAnimationFrame(loop);
     const before = NET.lastSnapshotSeq;
     dpSyncPrevApply(data);
     if (NET.role !== 'guest' || !S || !data || (Number.isFinite(data.seq) && NET.lastSnapshotSeq === before)) return;
-    dpReconcile(); dpRecordInterp();
+    dpReconcile(); dpSyncLocalMg(); dpRecordInterp(); dpPlaySfx(data.sfx);
   };
   const dpSyncPrevUpd = upd;
-  upd = function(dt) { dpGuestPredict(dt); return dpSyncPrevUpd(dt); };
+  upd = function(dt) { dpGuestPredict(dt); dpLocalMgTick(dt); return dpSyncPrevUpd(dt); };
   const dpSyncPrevDraw = draw;
   draw = function() {
     const it = NET.interp;
@@ -3939,6 +3966,7 @@ requestAnimationFrame(loop);
       savedCl = it.curCl;
       S.cl.forEach((c, i) => { const p = it.prevCl[i]; if (Math.abs(it.curCl[i][0] - p[0]) < W / 2) c.x = p[0] + (it.curCl[i][0] - p[0]) * a; c.y = p[1] + (it.curCl[i][1] - p[1]) * a; });
     }
+    if (NET.lmg) S.t = dpLocalT();
     try { return dpSyncPrevDraw(); }
     finally {
       for (const f in saved) S[f] = saved[f];
@@ -4169,6 +4197,319 @@ requestAnimationFrame(loop);
     const r = dpSquadPrevStart(k);
     if (NET.role !== 'off' && NET.squad && typeof S !== 'undefined' && S && S.D) S.D = { ...S.D, c: 0.7 };
     return r;
+  };
+
+  // ===========================================================================
+  // 1) Local minigames for guests, 2) per-player FC, 3) synced sounds,
+  // 4) victory / defeat window with "continue" vote
+  // ===========================================================================
+  const dpRawBeep = beep;
+  NET.lmg = null; NET.mgDone = null; NET.lkeys = {}; NET.sfx = []; NET.fcOwn = {}; NET.ctxMg = null; NET.hostMgFlag = false;
+  NET.res = null; NET.resHost = null;
+  const DP_MG_LOCAL = ['tm', 'wd', 'tp', 'fu', 'wr', 'mp', 'nl'];
+  const DP_MG_TIMING = ['tm', 'wd', 'tp', 'fu'];
+
+  // ---------- 1) guest-side minigames ----------
+  function dpMgKey(mg) { const p = mg && mg.p; return mg.k + '|' + (p ? [p.t, Math.round(p.x || 0), Math.round(p.y || 0), p.sd == null ? '' : p.sd].join(',') : ''); }
+  function dpLocalT() { const it = NET.interp; return it && Number.isFinite(it.cur.t) ? it.cur.t + (performance.now() - it.at) / 1000 : (S && S.t) || 0; }
+  function dpSyncLocalMg() {
+    const me = NET.players && NET.players[NET.selfId];
+    if (NET.role !== 'guest' || !me || !NET.gameStarted) { NET.lmg = null; return; }
+    const now = performance.now();
+    if (me.mg) {
+      const key = dpMgKey(me.mg);
+      if (NET.mgDone) {
+        if (NET.mgDone.key === key && now - NET.mgDone.at < 2500) { me.mg = null; return; }
+        if (NET.mgDone.key !== key) NET.mgDone = null;
+      }
+      if (!DP_MG_LOCAL.includes(me.mg.k)) { NET.lmg = null; return; }
+      if (!NET.lmg || NET.lmg.key !== key) NET.lmg = { key, m: JSON.parse(JSON.stringify(me.mg)), at: now };
+      me.mg = NET.lmg.m;
+    } else { NET.lmg = null; NET.mgDone = null; }
+  }
+  function dpAfterLocalMg(kind, escaped) {
+    const me = NET.players[NET.selfId];
+    if (!NET.lmg || !me || me.mg) return;
+    NET.mgDone = { key: NET.lmg.key, at: performance.now() }; NET.lmg = null;
+    if (!escaped && DP_MG_TIMING.includes(kind)) safeSend(NET.hostConn, { t: 'mgdone', k: kind });
+  }
+  function dpLocalMgTick(dt) {
+    const me = NET.players && NET.players[NET.selfId];
+    if (NET.role !== 'guest' || !NET.gameStarted || !NET.lmg || !me || me.mg !== NET.lmg.m || !S) return;
+    me.keys = NET.lkeys;
+    const kind = NET.lmg.m.k, savedT = S.t;
+    S.t = dpLocalT();
+    try {
+      dpWithPlayerContext(me, () => {
+        const m = S.mg; if (!m) return;
+        if (m.k === 'fu') fuUpd(m, dt);
+        if (m.k === 'tp') tpUpd(m, dt);
+        if (m.k === 'tm') { m.pos += m.dir * m.sp * dt; if (m.pos > 1) { m.pos = 1; m.dir = -1; } if (m.pos < 0) { m.pos = 0; m.dir = 1; } }
+        if (m.k === 'wd') {
+          m.g = Math.max(0, Math.min(1, m.g + (K.Space ? 1 : -.8 * (S.cls === 'wel' ? 1.55 : 1)) * dt));
+          const c = .5 + .25 * Math.sin(S.t * 1.4);
+          m.pg = Math.max(0, m.pg + (Math.abs(m.g - c) < .12 ? dt / 3.5 * (S.cls === 'tec' ? 1.25 : S.cls === 'eng' ? 1.45 : 1) * (UL('tl') ? 1.2 : 1) : -dt * .15));
+          if (m.pg >= 1) done();
+        }
+      });
+    } finally { S.t = savedT; }
+    dpAfterLocalMg(kind, false);
+  }
+  const dpMgPrevSend = sendInput;
+  sendInput = function(code, down, repeat) {
+    if (NET.role === 'guest' && NET.gameStarted) {
+      NET.lkeys[code] = !!down;
+      const me = NET.players && NET.players[NET.selfId];
+      if (NET.lmg && me && me.mg === NET.lmg.m) {
+        const kind = NET.lmg.m.k;
+        if (down && !repeat) {
+          me.keys = NET.lkeys;
+          dpWithPlayerContext(me, () => key(code));
+          dpAfterLocalMg(kind, code === 'Escape');
+        }
+        if (DP_MG_TIMING.includes(kind) && code !== 'Escape') return; // timing games are decided locally
+      }
+    }
+    return dpMgPrevSend(code, down, repeat);
+  };
+  ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(type => {
+    C.addEventListener(type, ev => {
+      const me = NET.players && NET.players[NET.selfId];
+      if (NET.role !== 'guest' || !NET.gameStarted || !NET.lmg || !me || me.mg !== NET.lmg.m || NET.lmg.m.k !== 'tp') return;
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      me.keys = NET.lkeys;
+      dpWithPlayerContext(me, () => ptr(ev, type === 'pointerdown' ? 'd' : type === 'pointermove' ? 'm' : 'u'));
+      dpAfterLocalMg('tp', false);
+    }, true);
+  });
+  // host: accept the finished timing minigame of a guest
+  function dpStampMg() {
+    for (const p of Object.values(NET.players || {})) {
+      if (!p || p.host) continue;
+      if (p.mg) { if (!p._mgSeen) { p._mgSeen = true; p._mgAt = Date.now(); } } else p._mgSeen = false;
+    }
+  }
+  const dpMgPrevAccept = acceptGuest;
+  acceptGuest = function(conn) {
+    dpMgPrevAccept(conn);
+    conn.on('data', data => {
+      if (!data || typeof data !== 'object' || NET.role !== 'host') return;
+      if (data.t === 'cont') { dpHostCont(conn.peer); return; }
+      if (data.t !== 'mgdone') return;
+      const p = NET.players[conn.peer];
+      if (!p || !p.mg || !NET.gameStarted || !S || S.ph === 'over' || p.mg.k !== data.k || !DP_MG_TIMING.includes(p.mg.k)) return;
+      if (Date.now() - (p._mgAt || 0) < 200) return;
+      dpRebindProblem(p);
+      dpWithPlayerContext(p, () => {
+        if (!S.mg) return;
+        if (S.mg.k === 'fu') { S.mg = null; dropItem(); S.fc += 2; toast('Канистра залита'); }
+        else done();
+      });
+    });
+  };
+
+  // ---------- 2) per-player FC ----------
+  let dpAttrDepth = 0;
+  function dpFcWrap(name) {
+    const prev = window[name];
+    if (typeof prev !== 'function') return;
+    window[name] = function(...args) {
+      if (NET.role !== 'host' || !NET.gameStarted || !S || dpAttrDepth > 0) return prev.apply(this, args);
+      const before = S.fc, flag = NET.hostMgFlag;
+      if (!NET.activePlayerId) NET.hostMgFlag = !!S.mg;
+      dpAttrDepth++;
+      try { return prev.apply(this, args); }
+      finally {
+        dpAttrDepth--; NET.hostMgFlag = flag;
+        const d = S.fc - before;
+        if (d > 0) { const id = NET.activePlayerId || NET.selfId; NET.fcOwn[id] = (NET.fcOwn[id] || 0) + d; }
+      }
+    };
+  }
+  ['key', 'done', 'fuUpd', 'tpUpd', 'ptr'].forEach(dpFcWrap);
+  const dpFcPrevStart = start;
+  start = function(k) { if (NET.role === 'host') NET.fcOwn = {}; return dpFcPrevStart(k); };
+  function dpComputeEarns(win) {
+    const list = playerList(), own = NET.fcOwn || {};
+    let sum = 0; list.forEach(p => { sum += own[p.id] || 0; });
+    const shared = Math.max(0, (S.fc || 0) - sum), m = fcm(), bonus = win ? Math.round(50 * m) : 0, out = {};
+    list.forEach(p => { out[p.id] = Math.floor(((own[p.id] || 0) + shared) * m) + bonus; });
+    return out;
+  }
+
+  // ---------- 3) synced sounds ----------
+  const dpSfxPrevCtx = dpWithPlayerContext;
+  dpWithPlayerContext = function(player, cb) {
+    const prev = NET.ctxMg;
+    NET.ctxMg = player && player.mg ? player.mg.k : null;
+    try { return dpSfxPrevCtx(player, cb); } finally { NET.ctxMg = prev; }
+  };
+  beep = function(f, d, v) {
+    if (NET.role === 'host' && NET.gameStarted) {
+      if (NET.ctxMg) { // a guest's minigame sound: heard only by that guest (and not at all if he simulates it himself)
+        if (!DP_MG_LOCAL.includes(NET.ctxMg)) { const c = NET.connections.get(NET.activePlayerId); if (c) safeSend(c, { t: 'sfx', s: [[f, d, v]] }); }
+        return;
+      }
+      dpRawBeep(f, d, v);
+      if (!NET.hostMgFlag && NET.connections.size) { NET.sfx.push([f, d, v]); if (NET.sfx.length > 40) NET.sfx.shift(); }
+      return;
+    }
+    dpRawBeep(f, d, v);
+  };
+  function dpPlaySfx(list) {
+    if (!Array.isArray(list)) return;
+    list.slice(-12).forEach(s => { if (Array.isArray(s) && Number.isFinite(s[0])) dpRawBeep(s[0], Math.min(2, Number(s[1]) || .1), s[2]); });
+  }
+  function dpNoise(dur) {
+    const b = AC.createBuffer(1, Math.floor(AC.sampleRate * dur), AC.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const s = AC.createBufferSource(); s.buffer = b; return s;
+  }
+  function dpPlayResultSound(kind) {
+    try {
+      AC = AC || new AudioContext(); AC.resume();
+      const t0 = AC.currentTime;
+      if (kind === 'win') { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => dpRawBeep(f, .22, .05), i * 170)); return; }
+      if (kind === 'boom') {
+        const n = dpNoise(2.4), lp = AC.createBiquadFilter(), g = AC.createGain();
+        lp.type = 'lowpass'; lp.frequency.setValueAtTime(2600, t0); lp.frequency.exponentialRampToValueAtTime(70, t0 + 2);
+        g.gain.setValueAtTime(.9, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + 2.4);
+        n.connect(lp); lp.connect(g); g.connect(AC.destination); n.start(t0);
+        const o = AC.createOscillator(), og = AC.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(90, t0); o.frequency.exponentialRampToValueAtTime(28, t0 + 1.3);
+        og.gain.setValueAtTime(.9, t0); og.gain.exponentialRampToValueAtTime(.001, t0 + 1.4);
+        o.connect(og); og.connect(AC.destination); o.start(t0); o.stop(t0 + 1.5);
+      } else { // coughing: a few short rasping bursts over ~2.5 s
+        [0, .55, 1.15, 1.8].forEach((off, i) => {
+          const t = t0 + off, n = dpNoise(.2), bp = AC.createBiquadFilter(), g = AC.createGain();
+          bp.type = 'bandpass'; bp.frequency.value = 650 + i * 60; bp.Q.value = 1.1;
+          g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.7, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + .19);
+          n.connect(bp); bp.connect(g); g.connect(AC.destination); n.start(t);
+          const o = AC.createOscillator(), og = AC.createGain();
+          o.type = 'sawtooth'; o.frequency.setValueAtTime(190, t); o.frequency.exponentialRampToValueAtTime(110, t + .15);
+          og.gain.setValueAtTime(.0001, t); og.gain.exponentialRampToValueAtTime(.12, t + .02); og.gain.exponentialRampToValueAtTime(.001, t + .17);
+          o.connect(og); og.connect(AC.destination); o.start(t); o.stop(t + .2);
+        });
+      }
+    } catch (e) {}
+  }
+
+  // ---------- 4) result window ----------
+  function dpEnsureResultDom() {
+    if (byId('dpResult')) return;
+    const el = document.createElement('div'); el.id = 'dpResult'; el.hidden = true;
+    el.innerHTML = '<div class="dpr-card" id="dprCard"><div class="dpr-badge" id="dprBadge"></div><h2 id="dprTitle"></h2><p id="dprWhy"></p><div id="dprMeta"></div><div id="dprList"></div>' +
+      '<div class="dpr-actions"><button id="dprLeave" type="button"></button><button id="dprCont" type="button"></button></div><div id="dprHint"></div></div>';
+    document.body.appendChild(el);
+    byId('dprLeave').addEventListener('click', () => { if (!NET.res || NET.res.pressed) return; leaveRoom(); });
+    byId('dprCont').addEventListener('click', () => {
+      if (!NET.res || NET.res.pressed) return;
+      NET.res.pressed = true;
+      if (NET.role === 'host') dpHostCont(NET.selfId); else safeSend(NET.hostConn, { t: 'cont' });
+      dpRenderResultButtons();
+    });
+  }
+  function dpRenderResultButtons() {
+    const r = NET.res; if (!r || !byId('dprCont')) return;
+    byId('dprLeave').textContent = dpL('Выйти из комнаты', 'Leave room');
+    byId('dprLeave').disabled = r.pressed;
+    byId('dprCont').textContent = dpL('Продолжить ', 'Continue ') + r.n + '/' + r.total;
+    byId('dprCont').disabled = r.pressed;
+    const left = r.endsAt ? Math.max(0, Math.ceil((r.endsAt - Date.now()) / 1000)) : null;
+    byId('dprHint').textContent = left != null
+      ? dpL('Ждём остальных игроков: ', 'Waiting for the others: ') + left + dpL(' с — иначе все вернутся в комнату', ' s — otherwise everyone returns to the room')
+      : dpL('Нажмите «Продолжить», чтобы начать новый рейс с теми же параметрами', 'Press Continue to start a new flight with the same settings');
+  }
+  function dpShowResult(msg) {
+    dpEnsureResultDom();
+    const win = !!msg.win;
+    NET.res = { pressed: false, n: 0, total: (msg.players || []).length || 1, endsAt: 0 };
+    byId('dprCard').className = 'dpr-card' + (win ? ' win' : '');
+    byId('dprBadge').textContent = win ? '🏆' : msg.kind === 'boom' ? '💥' : '😷';
+    byId('dprTitle').textContent = win ? dpL('ПОБЕДА', 'VICTORY') : dpL('ПОРАЖЕНИЕ', 'DEFEAT');
+    byId('dprWhy').textContent = (win ? '' : dpL('Причина: ', 'Cause: ')) + (msg.why || '');
+    byId('dprMeta').textContent = dpL('Пройдено: ', 'Distance: ') + (msg.km || 0) + dpL(' км · Сложность: ', ' km · Difficulty: ') + (msg.diff || '—') + (msg.squad ? dpL(' · Отряд FC ×0.7', ' · Squad FC ×0.7') : '');
+    const list = byId('dprList'); list.replaceChildren();
+    [...(msg.players || [])].sort((a, b) => b.earn - a.earn).forEach(p => {
+      const row = document.createElement('div'); row.className = 'dpr-row' + (p.id === NET.selfId ? ' me' : ''); row.style.setProperty('--pc', p.color || '#ffb347');
+      const dot = document.createElement('span'); dot.className = 'dpr-dot';
+      const name = document.createElement('span'); name.className = 'dpr-name'; name.textContent = p.name || 'Игрок';
+      if (p.id === NET.selfId) { const s = document.createElement('small'); s.textContent = dpL('вы', 'you'); name.appendChild(s); }
+      const fc = document.createElement('span'); fc.className = 'dpr-fc'; fc.textContent = '+' + (p.earn || 0) + ' FC';
+      row.append(dot, name, fc); list.appendChild(row);
+    });
+    byId('dpResult').hidden = false;
+    dpRenderResultButtons();
+    clearInterval(dpShowResult.t);
+    dpShowResult.t = setInterval(() => { if (NET.role === 'host') dpResHostCheck(false); dpRenderResultButtons(); }, 400);
+    dpPlayResultSound(win ? 'win' : msg.kind);
+  }
+  function dpHideResult() {
+    clearInterval(dpShowResult.t); NET.res = null;
+    const el = byId('dpResult'); if (el) el.hidden = true;
+  }
+  function dpApplyCont(n, total, left) {
+    if (!NET.res) return;
+    NET.res.n = n; NET.res.total = total; NET.res.endsAt = left != null ? Date.now() + left : 0;
+    dpRenderResultButtons();
+  }
+  function dpHostCont(id) {
+    const h = NET.resHost; if (!h || h.cont.has(id)) return;
+    h.cont.add(id);
+    if (!h.endsAt) h.endsAt = Date.now() + 15000;
+    dpResHostCheck(true);
+  }
+  function dpResHostCheck(force) {
+    const h = NET.resHost; if (!h) return;
+    const ids = new Set(Object.keys(NET.players || {}));
+    for (const id of Array.from(h.cont)) if (!ids.has(id)) h.cont.delete(id);
+    const total = ids.size, n = h.cont.size;
+    if (total > 0 && n >= total) { dpResClose(true); return; }
+    if (h.endsAt && Date.now() >= h.endsAt) { dpResClose(false); return; }
+    const sig = n + '/' + total + '/' + (h.endsAt ? 1 : 0);
+    if (force || sig !== h.sig) {
+      h.sig = sig;
+      const left = h.endsAt ? Math.max(0, h.endsAt - Date.now()) : null;
+      broadcast({ t: 'cont', n, total, left }); dpApplyCont(n, total, left);
+    }
+  }
+  function dpResClose(startAgain) {
+    NET.resHost = null; dpHideResult();
+    if (startAgain) startNetworkGame();
+    else { broadcast({ t: 'resclose' }); showOverlay('lobby'); renderLobby(); }
+  }
+  const dpResPriorOver = over;
+  over = function(win, why) {
+    const host = NET.role === 'host' && NET.gameStarted && S && S.ph !== 'over';
+    let earns = null, km = 0, diff = '';
+    if (host) { earns = dpComputeEarns(!!win); S.pe = earns; km = Math.floor(S.km || 0); diff = S.D && S.D.n || ''; }
+    const r = dpResPriorOver(win, why);
+    if (host) {
+      const mine = earns[NET.selfId] || 0;
+      try { SV.fc = (Number(SV.fc) || 0) - (Number(S.earn) || 0) + mine; S.earn = mine; sv(); renderCls(); renderUp(); } catch (_) {}
+      const reason = String(why || '');
+      const msg = {
+        t: 'result', win: !!win, why: reason, kind: win ? 'win' : (/упал|взрыв|сбил/i.test(reason) ? 'boom' : 'cough'), km, diff, squad: !!NET.squad,
+        players: playerList().map(p => ({ id: p.id, name: p.name, color: p.color, earn: earns[p.id] || 0 }))
+      };
+      if (NET.resHost) clearInterval(NET.resHost.timer);
+      NET.resHost = { cont: new Set(), endsAt: 0, sig: '' };
+      broadcast(msg); dpShowResult(msg);
+    }
+    return r;
+  };
+  const dpResPriorStartNet = startNetworkGame;
+  startNetworkGame = function() { NET.resHost = null; dpHideResult(); return dpResPriorStartNet(); };
+  const dpResPriorClear = clearNetworkState;
+  clearNetworkState = function() { dpResPriorClear(); NET.resHost = null; NET.lmg = null; NET.mgDone = null; NET.lkeys = {}; NET.sfx = []; NET.fcOwn = {}; dpHideResult(); };
+  const dpResPriorHostMsg = handleHostMessage;
+  handleHostMessage = function(data) {
+    if (data && data.t === 'result') { dpShowResult(data); return; }
+    if (data && data.t === 'cont') { dpApplyCont(Number(data.n) || 0, Number(data.total) || 1, Number.isFinite(data.left) ? data.left : null); return; }
+    if (data && data.t === 'resclose') { dpHideResult(); showOverlay('lobby'); renderLobby(); return; }
+    if (data && data.t === 'sfx') { dpPlaySfx(data.s); return; }
+    if (data && data.t === 'start') { dpHideResult(); NET.lmg = null; NET.mgDone = null; NET.lkeys = {}; }
+    return dpResPriorHostMsg(data);
   };
 
 })();
