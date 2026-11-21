@@ -9,6 +9,7 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
 #w{position:relative;width:min(100%,900px)}
+@media (orientation:landscape) and (max-height:600px){body{min-height:100dvh}#w{width:min(100%,900px,calc((100dvh - 12px)*2.02))}}
 canvas{width:100%;display:block;border-radius:12px;border:2px solid var(--bd);background:#000}
 #menu{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(12,12,18,.88);border-radius:12px;color:#f2e9d8;text-align:center}
 .box{max-width:560px;padding:16px}
@@ -23,7 +24,7 @@ canvas{touch-action:manipulation}
 #pad{display:none;position:absolute;inset:0;pointer-events:none;user-select:none;-webkit-user-select:none}
 #pad.on{display:block}
 #pad .g{position:absolute;display:flex;gap:8px}
-#pad .l{left:8px;bottom:8px}#pad .r{right:8px;bottom:8px}
+#pad .l{left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));max-width:calc(100% - 16px);flex-wrap:wrap}#pad.pos1 .l{top:50%;bottom:auto;transform:translateY(-50%)}#pad.pos2 .l{top:max(8px,env(safe-area-inset-top,0px));bottom:auto;transform:none}#pad .r{right:8px;bottom:8px}
 #pad .t{right:8px;bottom:calc(var(--b) + 16px);flex-wrap:wrap;justify-content:flex-end;max-width:60%}
 .pb{pointer-events:auto;touch-action:none;width:var(--b);height:var(--b);margin:0;padding:0;border-radius:50%;background:rgba(255,179,71,.72);color:#2b1a05;font-size:1.1rem;border:2px solid rgba(0,0,0,.35)}
 .pb:hover{background:rgba(255,179,71,.72)}.pb:active{background:#fff}
@@ -65,7 +66,7 @@ canvas{touch-action:manipulation}
 .pb.mv{width:var(--mvs);height:var(--mvs);font-size:calc(var(--mvs)*.4)}
 #pad.bs .pb.mv2{width:var(--mvs);height:var(--mvs);font-size:calc(var(--mvs)*.4)}
 
-.sz.on{outline:3px solid #fff}
+.sz.on,.pos.on{outline:3px solid #fff}
 #chs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;text-align:left;margin:6px 0}
 .cc.lk{opacity:.5}
 .hd{grid-column:1/-1;color:#ffb347;font-weight:700;margin-top:6px;font-size:.9rem}
@@ -117,6 +118,61 @@ canvas{touch-action:manipulation}
  .net-footnote{font-size:.6rem}
 }
 
+/* Dusty Plane room polish (список игроков, код, пинг) */
+.net-panel{padding:clamp(12px,3vw,22px);border-radius:16px;background:linear-gradient(160deg,rgba(255,179,71,.07),rgba(255,255,255,.015) 40%),rgba(10,14,26,.72);border:1px solid rgba(255,179,71,.2);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.net-room-code-wrap{background:linear-gradient(135deg,rgba(255,179,71,.16),rgba(255,179,71,.05));border-color:rgba(255,179,71,.4)}
+#netRoomCode{cursor:pointer;text-shadow:0 0 18px rgba(255,179,71,.35);transition:transform .15s}
+#netRoomCode:active{transform:scale(.97)}
+#netCopyBtn{white-space:nowrap;transition:background .2s,color .2s}
+#netCopyBtn.copied{background:#7bdcb5;color:#0e2a1f;border-color:#7bdcb5}
+#netCopyBtn.copied:before{content:'\2713  '}
+.net-players-head{padding:2px 2px 0;letter-spacing:.02em}
+#netPlayerCount{padding:2px 10px;border-radius:999px;background:rgba(255,179,71,.14);border:1px solid rgba(255,179,71,.3)}
+.net-status{border-left:3px solid rgba(255,179,71,.6)}
+.net-player-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px}
+.net-player{gap:10px;padding:9px 11px;border-radius:12px;background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.1);border-left:3px solid var(--pc,#ffb347)}
+.net-player.new{animation:netIn .3s ease both}
+.net-player.me{border-color:rgba(255,179,71,.5);border-left-color:var(--pc,#ffb347);box-shadow:inset 0 0 0 1px rgba(255,179,71,.14)}
+.net-player.empty{opacity:.5;border:1px dashed rgba(255,255,255,.25);background:transparent}
+.net-avatar{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#10131c;background:var(--pc,#ffb347);box-shadow:0 0 0 2px rgba(255,255,255,.15),0 0 12px var(--pc,#ffb347)}
+.net-player.empty .net-avatar{background:transparent;box-shadow:none;border:1px dashed rgba(255,255,255,.35);color:rgba(255,255,255,.45)}
+.net-info{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.net-player-name{font-weight:700;font-size:.82rem}
+.net-player-sub{font-size:.66rem;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.net-tags{display:flex;gap:4px;align-items:center;flex:0 0 auto}
+.net-tag{font-size:.58rem;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:999px;background:rgba(255,179,71,.18);color:#ffd08a;border:1px solid rgba(255,179,71,.4)}
+.net-tag.me{background:rgba(98,200,255,.16);color:#a9dcff;border-color:rgba(98,200,255,.4)}
+.net-ping{display:inline-flex;align-items:flex-end;gap:2px;height:14px;font-size:.6rem;color:var(--pq,#7bdcb5)}
+.net-ping i{width:3px;border-radius:1px;background:currentColor;opacity:.25}
+.net-ping i:nth-child(1){height:5px}.net-ping i:nth-child(2){height:9px}.net-ping i:nth-child(3){height:13px}
+.net-ping i.on{opacity:1}
+.net-ping b{font-weight:600;margin-left:4px;align-self:center;font-variant-numeric:tabular-nums}
+#netPingHud{display:inline-block;margin-right:6px;padding:5px 9px;border-radius:999px;font-size:.68rem;font-weight:700;color:#10131c;background:#7bdcb5;vertical-align:middle;font-variant-numeric:tabular-nums}
+#netPingHud.mid{background:#f0c04e}#netPingHud.bad{background:#ff8b7a}#netPingHud[hidden]{display:none}
+@keyframes netIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.net-player.new{animation:none}}
+@media(max-width:700px),(max-height:480px){.net-avatar{flex-basis:26px;height:26px;font-size:.75rem}.net-player{padding:6px 8px}.net-player-list{gap:5px}}
+
+/* Dusty Plane: menu, chips, mute, chat gate */
+html:not(.dp-net) #dpChatRoot{display:none!important}
+.net-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:10px 0 8px;border-radius:12px;background:rgba(255,255,255,.06)}
+#netOverlay .net-tabs button{margin:0;padding:9px 8px;border-radius:9px;background:transparent;color:#e8dcc4;border:0;font-weight:700;font-size:.82rem}
+#netOverlay .net-tabs button.on{background:#ffb347;color:#241507}
+.net-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px 8px}
+.net-check{display:flex;gap:10px;align-items:flex-start;margin:10px 0 6px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer}
+#netOverlay input[type=checkbox]{display:inline-block;flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;padding:0;accent-color:#ffb347}
+.net-check span{display:flex;flex-direction:column;font-size:.82rem}.net-check small{opacity:.65;font-size:.68rem;margin-top:2px}
+#netPaneCreate .net-primary,#netPaneJoin .net-primary{margin-top:8px}
+.net-chips{display:flex;flex-wrap:wrap;gap:6px}
+.net-chip{padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#f2e3c4}
+#netHostControls label.net-label,#netMode,#netDifficulty{display:none!important}
+.net-mute{margin:0;padding:3px 7px;font-size:.8rem;line-height:1;border-radius:8px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.net-mute:hover{background:rgba(255,255,255,.16)}.net-mute.on{background:rgba(255,120,100,.28);border-color:rgba(255,120,100,.6)}
+#dpMuteBar{display:flex;flex-wrap:wrap;gap:5px;padding:7px 9px;background:#1d2535;border-bottom:1px solid #465168}
+#dpMuteBar[hidden]{display:none}
+.dp-chip{margin:0;padding:3px 9px;font-size:11px;font-weight:600;border-radius:999px;background:#2c3548;color:#fff;border:1px solid #56647c}
+.dp-chip:hover{background:#3a455c}.dp-chip.on{background:#6b2f2f;border-color:#b45a5a}
+
 </style><style id="dpChatStyles">
 
 #dpChatRoot{position:fixed!important;right:14px;top:calc(14px + env(safe-area-inset-top,0px));z-index:2147483647!important;font-family:system-ui,sans-serif;color:#f7f4ee;pointer-events:none}
@@ -164,10 +220,10 @@ canvas{touch-action:manipulation}
 <p id="langLabel">Язык / Language:</p>
 <div><button class="lang" data-lang="ru">РУС</button><button class="lang" data-lang="en">ENG</button></div>
 <p id="langNote" style="font-size:.8rem;opacity:.8">Выберите язык интерфейса.</p>
-<p id="sizeLabel">Размер кнопок перемещения (◄ ► и ↑ ↓ в босс-файте):</p><div><button class="sz" data-z="0">Маленький</button><button class="sz" data-z="1">Средний</button><button class="sz" data-z="2">Большой</button></div><p id="sizeNote" style="font-size:.8rem;opacity:.8">Размер меняет только кнопки перемещения. В босс-файте стрелки собираются слева, рывок (Space) справа.</p></section>
+<p id="sizeLabel">Размер кнопок перемещения (◄ ► и ↑ ↓ в босс-файте):</p><div><button class="sz" data-z="0">Маленький</button><button class="sz" data-z="1">Средний</button><button class="sz" data-z="2">Большой</button></div><p id="sizeNote" style="font-size:.8rem;opacity:.8">Размер меняет только кнопки перемещения. В босс-файте стрелки собираются слева, рывок (Space) справа.</p><p id="posLabel">Положение кнопок движения:</p><div><button class="pos" data-pos="0">Снизу</button><button class="pos" data-pos="1">По центру</button><button class="pos" data-pos="2">Сверху</button></div><p id="posNote" style="font-size:.8rem;opacity:.8">Настройка перемещает группу кнопок ◄ ► и ↑ ↓. Выбор сохраняется на этом устройстве.</p></section>
 <section data-p="ref" style="display:none"><div id="ref"></div></section>
 </div>
-<div id="ver">v1.1.1 · ONLINE</div>
+<div id="ver">v1.1.2 · ONLINE</div>
 </div>
 <div id="netOverlay" aria-label="Сетевая игра">
   <div class="net-panel">
@@ -179,18 +235,37 @@ canvas{touch-action:manipulation}
       <button id="netCloseBtn" class="net-close" type="button" aria-label="Закрыть">×</button>
     </div>
     <div id="netHome">
-      <p class="net-desc">Создай комнату и пригласи друзей по коду. Хост управляет состоянием самолёта, остальные игроки подключаются к общему рейсу.</p>
+      <p class="net-desc">Войди в открытую комнату, подключись по коду или настрой свой рейс и создай комнату.</p>
       <label class="net-label" for="netNickInput">Никнейм</label>
       <input id="netNickInput" maxlength="18" autocomplete="nickname" placeholder="Игрок">
-      <div class="net-actions">
-        <button id="netCreateBtn" class="net-primary" type="button">Создать комнату</button>
+      <div class="net-tabs" role="tablist">
+        <button id="netTabJoin" class="on" type="button" role="tab">Войти в комнату</button>
+        <button id="netTabCreate" type="button" role="tab">Создать комнату</button>
       </div>
-      <div class="net-separator"><span>или войти по коду</span></div>
-      <label class="net-label" for="netCodeInput">Код комнаты</label>
-      <div class="net-join-row">
-        <input id="netCodeInput" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off">
-        <button id="netJoinBtn" type="button">Подключиться</button>
+      <div id="netPaneJoin">
+        <label class="net-label" for="netCodeInput">Код комнаты</label>
+        <div class="net-join-row">
+          <input id="netCodeInput" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off">
+          <button id="netJoinBtn" type="button">Подключиться</button>
+        </div>
+        <div class="net-separator"><span>или</span></div>
+        <button id="netRandomBtn" class="net-primary" type="button">🎲 Найти случайную открытую комнату</button>
       </div>
+      <div id="netPaneCreate" hidden>
+        <div class="net-form-grid">
+          <div><label class="net-label" for="netCfgMode">Режим рейса</label>
+            <select id="netCfgMode"><option value="free">Свободный полёт</option><option value="inf">Бесконечный</option><option value="sto">Экстренная ситуация</option></select></div>
+          <div><label class="net-label" for="netCfgDiff">Сложность рейса</label>
+            <select id="netCfgDiff"><option value="vez">Очень лёгкий</option><option value="easy">Лёгкий</option><option value="normal" selected>Нормальный</option><option value="hard">Сложный</option></select></div>
+          <div><label class="net-label" for="netCfgMax">Макс. игроков</label>
+            <select id="netCfgMax"><option>2</option><option>3</option><option>4</option><option selected>5</option></select></div>
+        </div>
+        <label class="net-check" for="netCfgSquad"><input type="checkbox" id="netCfgSquad"><span><b>Режим отряда</b><small>От 6 до 10 игроков. Награда FC ×0.7 при любой сложности.</small></span></label>
+        <label class="net-check" for="netCfgPrivate"><input type="checkbox" id="netCfgPrivate"><span><b>Закрытая комната</b><small>Её не найдёт «случайная комната». Войти можно только по коду.</small></span></label>
+        <div class="net-footnote">Настройки задаются до создания и потом не меняются. Комната появится в сети только после нажатия кнопки.</div>
+        <button id="netCreateGo" class="net-primary" type="button">Создать комнату</button>
+      </div>
+      <button id="netCreateBtn" type="button" hidden>Создать комнату</button>
       <div id="netHomeStatus" class="net-status" role="status" aria-live="polite">Комнаты работают по коду приглашения.</div>
     </div>
     <div id="netLobby" hidden>
@@ -198,6 +273,7 @@ canvas{touch-action:manipulation}
         <div><span class="net-label">Код комнаты</span><strong id="netRoomCode">------</strong></div>
         <button id="netCopyBtn" type="button">Копировать код</button>
       </div>
+      <div id="netRoomInfo" class="net-chips"></div>
       <div class="net-players-head"><span>Игроки</span><span id="netPlayerCount">1 / 8</span></div>
       <div id="netPlayers" class="net-player-list"></div>
       <div id="netLobbyStatus" class="net-status" role="status" aria-live="polite">Ожидание игроков...</div>
@@ -229,6 +305,7 @@ canvas{touch-action:manipulation}
   <button id="dpChatToggle" type="button" aria-expanded="false"><span id="dpChatToggleLabel">Чат</span><span id="dpChatUnread" hidden>0</span></button>
   <section id="dpChatPanel" hidden aria-label="Чат экипажа">
     <header class="dp-chat-header"><div><strong id="dpChatTitle">Чат экипажа</strong><small id="dpChatSubtitle">Сообщения комнаты</small></div><button id="dpChatClose" type="button" aria-label="Закрыть чат">×</button></header>
+    <div id="dpMuteBar" hidden></div>
     <div id="dpChatMessages" role="log" aria-live="polite" aria-relevant="additions"></div>
     <form id="dpChatForm"><input id="dpChatInput" type="text" maxlength="240" autocomplete="off" placeholder="Написать сообщение…"><button id="dpChatSend" type="submit">Отправить</button></form>
   </section>
@@ -679,10 +756,10 @@ function mkBtn(par,code,txt,cls){
 (function(){
  const g=c=>{const d=document.createElement('div');d.className='g '+c;PAD.appendChild(d);return d};
  const L=g('l'),R=g('r'),T=g('t');
- mkBtn(L,'ArrowLeft','◄','mv');mkBtn(L,'ArrowRight','►','mv');
+ mkBtn(L,'ArrowLeft','◄','mv');mkBtn(L,'ArrowRight','►','mv');mkBtn(L,'ArrowUp','↑','s mv2');mkBtn(L,'ArrowDown','↓','s mv2');
  mkBtn(R,'KeyE','E');mkBtn(R,'Space','Space','w');
  ['Digit1','Digit2','Digit3','Digit4','Digit5'].forEach((c,i)=>mkBtn(T,c,''+(i+1),'s'));
- mkBtn(T,'KeyR','R','s');mkBtn(T,'KeyF','F','s');mkBtn(T,'ArrowUp','↑','s mv2');mkBtn(T,'ArrowDown','↓','s mv2');mkBtn(T,'Escape','Esc','s');mkBtn(T,'KeyQ','Q','s');mkBtn(T,'KeyG','G','s');
+ mkBtn(T,'KeyR','R','s');mkBtn(T,'KeyF','F','s');mkBtn(T,'Escape','Esc','s');mkBtn(T,'KeyQ','Q','s');mkBtn(T,'KeyG','G','s');
 })();
 function ctxUpd(){PAD.classList.toggle('bs',S.ph==='boss');if(S.ph==='boss'||S.ph==='cut'){const b=S.ph==='boss';for(const k in PB)PB[k].style.display=b&&'ArrowLeft,ArrowRight,ArrowUp,ArrowDown,Space'.includes(k)?'':'none';return}
  const th=S.ph==='flight'&&near(HELM,60),tl=near(90,55),m=S.mg;
@@ -1136,9 +1213,18 @@ function groundPass(){
 }
 const UL=g=>{const v=S&&S.upl&&S.upl[g];return v?+v.slice(-1):0};
 const GN0={tk:'Топливо',ox:'Кислород',hu:'Корпус',el:'Электросеть',cl:'Климат',sf:'Пожарная безопасность',tl:'Инструменты',nv:'Кабина',ki:'Салон',wi:'Крылья',pa:'Безопасность',ga:'Экономика',au:'Аудио',ai:'Автопилот'};
-SV.ui=SV.ui||{sz:0};
-function applyUI(){PAD.classList.remove('m1','m2');if(SV.ui.sz)PAD.classList.add('m'+SV.ui.sz);document.querySelectorAll('.sz').forEach(b=>b.classList.toggle('on',+b.dataset.z===SV.ui.sz))}
+SV.ui=SV.ui||{sz:0,pos:0};
+SV.ui.sz=Math.max(0,Math.min(2,parseInt(SV.ui.sz,10)||0));
+SV.ui.pos=Math.max(0,Math.min(2,parseInt(SV.ui.pos,10)||0));
+function applyUI(){
+ PAD.classList.remove('m1','m2','pos1','pos2');
+ if(SV.ui.sz)PAD.classList.add('m'+SV.ui.sz);
+ if(SV.ui.pos)PAD.classList.add('pos'+SV.ui.pos);
+ document.querySelectorAll('.sz').forEach(b=>b.classList.toggle('on',+b.dataset.z===SV.ui.sz));
+ document.querySelectorAll('.pos').forEach(b=>b.classList.toggle('on',+b.dataset.pos===SV.ui.pos));
+}
 document.querySelectorAll('.sz').forEach(b=>b.onclick=()=>{SV.ui.sz=+b.dataset.z;sv();applyUI()});
+document.querySelectorAll('.pos').forEach(b=>b.onclick=()=>{SV.ui.pos=+b.dataset.pos;sv();applyUI()});
 applyUI();renderMode();renderUp();
 let CHS=1;
 const STM=()=>MODE==='sto'||(MODE==='st'&&CHS===5);
@@ -2159,6 +2245,13 @@ requestAnimationFrame(loop);
       else if(n.nodeType===3)processTextNode(n);
     }
   }
+  Object.assign(fullDict, {
+    'Положение кнопок движения:':'Movement button position:',
+    'Снизу':'Bottom',
+    'По центру':'Middle',
+    'Сверху':'Top',
+    'Настройка перемещает группу кнопок ◄ ► и ↑ ↓. Выбор сохраняется на этом устройстве.':'Moves the ◄ ► and ↑ ↓ controls. Your choice is saved on this device.'
+  });
   let translating=false;
   const observer=new MutationObserver(records=>{if(translating)return; translating=true; for(const r of records){if(r.type==='characterData')processTextNode(r.target); if(r.type==='attributes')processAttrs(r.target); for(const node of r.addedNodes||[]){if(node.nodeType===3)processTextNode(node); else if(node.nodeType===1)translateTree(node);}} translating=false;});
   observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt','value']});
@@ -2207,7 +2300,7 @@ requestAnimationFrame(loop);
   'use strict';
 
   const byId = id => document.getElementById(id);
-  const MAX_PLAYERS = 8;
+  const MAX_PLAYERS = 10; // absolute cap (squad mode); normal rooms hold up to 5
   const ROOM_PREFIX = 'dustyplane-';
   const BASE_ICE_SERVERS = [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -2313,13 +2406,20 @@ requestAnimationFrame(loop);
     try { localStorage.setItem('dusty_net_nick', nick); } catch (_) {}
     return nick;
   }
-  function randomCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+  function randomCode() {
+    // Open rooms use a small reserved range (900001-900040) so that "find a random room" can probe it;
+    // closed rooms use ordinary codes that can never be discovered.
+    NET._try = (NET._try || 0) + 1;
+    if (NET.isPublic && NET._try <= 6) return String(900001 + Math.floor(Math.random() * 40));
+    NET.isPublic = false;
+    return String(Math.floor(100000 + Math.random() * 800000));
+  }
   function playerList() { return Object.values(NET.players || {}).sort((a,b) => (a.host ? -1 : b.host ? 1 : String(a.name).localeCompare(String(b.name)))); }
   function renderLobby() {
     const isHost = NET.role === 'host';
     setText('netRoomCode', NET.roomCode || '------');
     const list = playerList();
-    setText('netPlayerCount', `${list.length} / ${MAX_PLAYERS}`);
+    setText('netPlayerCount', `${list.length} / ${NET.maxPlayers || 5}`);
     const container = byId('netPlayers');
     container.replaceChildren();
     if (!list.length) {
@@ -2447,7 +2547,7 @@ requestAnimationFrame(loop);
           setTimeout(() => { try { conn.close(); } catch (_) {} }, 100);
           return;
         }
-        if (!NET.players[conn.peer] && Object.keys(NET.players).length >= MAX_PLAYERS) {
+        if (!NET.players[conn.peer] && Object.keys(NET.players).length >= (NET.maxPlayers || 5)) {
           safeSend(conn, { t: 'reject', message: 'В комнате уже максимальное количество игроков.' });
           setTimeout(() => { try { conn.close(); } catch (_) {} }, 100);
           return;
@@ -2457,7 +2557,7 @@ requestAnimationFrame(loop);
           id: conn.peer, name: cleanNick(data.name), x: 450, left: false, right: false,
           // Each participant owns their own avatar position, tools, seat and minigame.
           item: null, inv: [], mg: null, seat: false, sit: false, wing: null, keys: {},
-          cls: String(data.cls || 'pil'), msg: '', msgT: 0, host: false, color: ['#62c8ff','#c58bff','#7bdcb5','#ff8b7a','#d4d96b','#f0a64e'][Object.keys(NET.players).length % 6]
+          cls: String(data.cls || 'pil'), msg: '', msgT: 0, host: false, color: ['#62c8ff','#c58bff','#7bdcb5','#ff8b7a','#d4d96b','#ff9ad5','#9aa7ff','#a3e36b','#e0b8ff','#7fe0e8'][Object.keys(NET.players).length % 10]
         };
         safeSend(conn, { t: 'welcome', selfId: conn.peer, hostId: NET.hostId, roomCode: NET.roomCode, players: playerList(), chatHistory: (NET.chatHistory || []).slice(-80) });
         broadcastLobby();
@@ -2485,7 +2585,7 @@ requestAnimationFrame(loop);
       NET.iceSource = iceSetup.source;
       NET.mode = ['free', 'inf', 'sto'].includes(MODE) ? MODE : 'free';
       let lastError = null;
-      for (let attempt = 0; attempt < 4; attempt++) {
+      for (let attempt = 0; attempt < 8; attempt++) {
         const code = randomCode();
         const peerId = ROOM_PREFIX + code;
         const peer = new Peer(peerId, peerOptionsWithIce(iceSetup.iceServers));
@@ -2925,7 +3025,7 @@ requestAnimationFrame(loop);
   byId('netJoinBtn').addEventListener('click', joinRoom);
   byId('netCodeInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); });
   byId('netCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
-  byId('netStartBtn').addEventListener('click', startNetworkGame);
+  byId('netStartBtn').addEventListener('click', () => startNetworkGame());
   byId('netCopyBtn').addEventListener('click', copyRoomCode);
   byId('netLeaveBtn').addEventListener('click', leaveRoom);
   try { byId('netNickInput').value = localStorage.getItem('dusty_net_nick') || ''; } catch (_) {}
@@ -3210,6 +3310,7 @@ requestAnimationFrame(loop);
       } else if (data.t === 'chat') {
         const now = Date.now(), last = NET.chatRate.get(conn.peer) || 0;
         if (now - last < 650) return;
+        if (dpIsMuted(conn.peer)) { safeSend(conn, { t: 'mute', all: NET.muteAll, ids: Array.from(NET.mutedIds) }); return; }
         NET.chatRate.set(conn.peer, now);
         const player = NET.players[conn.peer];
         if (!player) return;
@@ -3595,6 +3696,480 @@ requestAnimationFrame(loop);
   dpRefreshChatVisibility();
   dpFinalUpdateRoomControls();
   window.setInterval(dpRefreshChatVisibility, 200);
+
+  // ---------------------------------------------------------------------------
+  // Room UI + sync polish: ping, prettier player list, client-side prediction
+  // for the guest's own avatar, snapshot interpolation and lighter snapshots.
+  // Room settings (mode / difficulty / start) are intentionally not touched.
+  // ---------------------------------------------------------------------------
+  NET.pings = {}; NET.ping = null; NET.pred = null; NET.interp = null; NET.heldL = false; NET.heldR = false;
+  const dpSeen = new Set();
+  const dpL = (ru, en) => dpChatLocale(ru, en);
+  const dpMs = () => dpL('мс', 'ms');
+
+  function dpPingOf(p) {
+    if (p.host) return null;
+    const v = p.id === NET.selfId ? NET.ping : (NET.pings || {})[p.id];
+    return Number.isFinite(v) ? v : null;
+  }
+  function dpRenderPlayers() {
+    const box = byId('netPlayers');
+    if (!box || NET.role === 'off') return;
+    const list = playerList();
+    const frag = document.createDocumentFragment();
+    for (const p of list) {
+      const me = p.id === NET.selfId;
+      const row = document.createElement('div');
+      row.className = 'net-player' + (me ? ' me' : '') + (dpSeen.has(p.id) ? '' : ' new');
+      dpSeen.add(p.id);
+      row.style.setProperty('--pc', p.color || '#ffb347');
+      const av = document.createElement('span'); av.className = 'net-avatar';
+      av.textContent = (String(p.name || 'И').trim()[0] || 'И').toUpperCase();
+      const info = document.createElement('span'); info.className = 'net-info';
+      const name = document.createElement('span'); name.className = 'net-player-name'; name.textContent = p.name || 'Игрок';
+      const cls = typeof CL !== 'undefined' && Array.isArray(CL) ? CL.find(c => c.id === p.cls) : null;
+      const sub = document.createElement('span'); sub.className = 'net-player-sub';
+      sub.textContent = cls && cls.n ? cls.n : (p.host ? dpL('Создатель комнаты', 'Room host') : dpL('Экипаж', 'Crew'));
+      info.append(name, sub);
+      const tags = document.createElement('span'); tags.className = 'net-tags';
+      if (p.host) { const g = document.createElement('span'); g.className = 'net-tag'; g.textContent = dpL('ХОСТ', 'HOST'); tags.appendChild(g); }
+      if (me) { const g = document.createElement('span'); g.className = 'net-tag me'; g.textContent = dpL('ВЫ', 'YOU'); tags.appendChild(g); }
+      const ms = dpPingOf(p);
+      if (ms != null) {
+        const lvl = ms < 90 ? 3 : ms < 180 ? 2 : 1;
+        const pg = document.createElement('span'); pg.className = 'net-ping';
+        pg.style.setProperty('--pq', lvl === 3 ? '#7bdcb5' : lvl === 2 ? '#f0c04e' : '#ff8b7a');
+        for (let i = 1; i <= 3; i++) { const b = document.createElement('i'); if (i <= lvl) b.className = 'on'; pg.appendChild(b); }
+        const n = document.createElement('b'); n.textContent = Math.round(ms) + ' ' + dpMs(); pg.appendChild(n);
+        tags.appendChild(pg);
+      }
+      row.append(av, info, tags);
+      frag.appendChild(row);
+    }
+    if (!NET.gameStarted) {
+      for (let i = 0; i < Math.min(2, (NET.maxPlayers || 5) - list.length); i++) {
+        const row = document.createElement('div'); row.className = 'net-player empty';
+        const av = document.createElement('span'); av.className = 'net-avatar'; av.textContent = '+';
+        const info = document.createElement('span'); info.className = 'net-info';
+        const name = document.createElement('span'); name.className = 'net-player-name'; name.textContent = dpL('Ждём игрока…', 'Waiting for a player…');
+        info.appendChild(name); row.append(av, info); frag.appendChild(row);
+      }
+    }
+    box.replaceChildren(frag);
+  }
+  const dpUiPriorRenderLobby = renderLobby;
+  renderLobby = function() { const r = dpUiPriorRenderLobby(); dpRenderPlayers(); return r; };
+  const dpUiPriorClear = clearNetworkState;
+  clearNetworkState = function() { dpUiPriorClear(); NET.pings = {}; NET.ping = null; NET.pred = null; NET.interp = null; NET.heldL = NET.heldR = false; dpSeen.clear(); dpUpdateHud(); };
+
+  function dpCopyFlash() {
+    const b = byId('netCopyBtn'); if (!b) return;
+    b.classList.add('copied'); clearTimeout(dpCopyFlash.t);
+    dpCopyFlash.t = setTimeout(() => b.classList.remove('copied'), 1600);
+  }
+  byId('netCopyBtn').addEventListener('click', dpCopyFlash);
+  byId('netRoomCode').addEventListener('click', () => { copyRoomCode(); dpCopyFlash(); });
+
+  function dpUpdateHud() {
+    const hud = byId('netHud'); if (!hud) return;
+    let el = byId('netPingHud');
+    if (!el) { el = document.createElement('span'); el.id = 'netPingHud'; hud.insertBefore(el, hud.firstChild); }
+    if (NET.role === 'off') { el.hidden = true; return; }
+    el.hidden = false;
+    if (NET.role === 'guest') {
+      const v = NET.ping;
+      el.textContent = Number.isFinite(v) ? Math.round(v) + ' ' + dpMs() : '… ' + dpMs();
+      el.className = !Number.isFinite(v) || v < 90 ? '' : v < 180 ? 'mid' : 'bad';
+    } else { el.textContent = '👥 ' + playerList().length; el.className = ''; }
+  }
+
+  // Ping: guests measure RTT, report it to the host, host shares the table.
+  const dpSyncPrevAccept = acceptGuest;
+  acceptGuest = function(conn) {
+    dpSyncPrevAccept(conn);
+    conn.on('data', data => {
+      if (!data || typeof data !== 'object' || NET.role !== 'host') return;
+      if (data.t === 'ping') safeSend(conn, { t: 'pong', ts: data.ts });
+      else if (data.t === 'rtt' && Number.isFinite(data.v)) NET.pings[conn.peer] = Math.max(0, Math.min(5000, Math.round(data.v)));
+    });
+  };
+  const dpSyncPrevHostMsg = handleHostMessage;
+  handleHostMessage = function(data) {
+    if (data && data.t === 'pong') {
+      const r = performance.now() - data.ts;
+      if (r >= 0 && r < 10000) {
+        NET.ping = NET.ping == null ? r : NET.ping * .6 + r * .4;
+        safeSend(NET.hostConn, { t: 'rtt', v: Math.round(NET.ping) });
+        dpUpdateHud();
+      }
+      return;
+    }
+    if (data && data.t === 'pings') { NET.pings = data.p || {}; return; }
+    return dpSyncPrevHostMsg(data);
+  };
+  window.setInterval(() => {
+    if (NET.role === 'guest' && NET.hostConn && NET.hostConn.open) safeSend(NET.hostConn, { t: 'ping', ts: performance.now() });
+    if (NET.role === 'host' && NET.connections.size) broadcast({ t: 'pings', p: NET.pings });
+    dpUpdateHud();
+    const ov = byId('netOverlay');
+    if (NET.role !== 'off' && ov && ov.style.display === 'block' && !byId('netLobby').hidden) dpRenderPlayers();
+  }, 2000);
+  dpUpdateHud();
+
+  // The chat was fully rebuilt 4-5 times per second by the visibility timers.
+  // Re-render only when something actually changed.
+  const dpOrigRenderChat = dpRenderChat; let dpChatKey = '';
+  dpRenderChat = function() {
+    const last = NET.chatHistory[NET.chatHistory.length - 1];
+    const key = [NET.role, NET.selfId, NET.chatHistory.length, last && last.id, NET.chatUnread, dpL('a', 'b')].join('|');
+    if (key === dpChatKey) return;
+    dpChatKey = key; dpOrigRenderChat();
+  };
+
+  // ---- Host: lighter, faster snapshots (no deep clone, adaptive rate) ------
+  sendSnapshot = function(force, onlyConnection) {
+    if (NET.role !== 'host' || !S || (!NET.gameStarted && !(force && S.ph === 'over'))) return;
+    const targets = (onlyConnection ? [onlyConnection] : Array.from(NET.connections.values())).filter(c => c && c.open);
+    if (!targets.length) return;
+    const now = performance.now();
+    if (!force && now - NET.lastSnapshot < (NET.connections.size > 3 ? 100 : 70)) return;
+    NET.lastSnapshot = now;
+    const savedMg = S.mg;
+    S.mg = null; // minigames are per-player, carried in the players list
+    try {
+      const packet = { t: 'snapshot', seq: ++NET.snapshotSeq, sentAt: Date.now(), state: S, players: netPlayerSnapshot() };
+      for (const conn of targets) {
+        const queued = conn.dataChannel && Number(conn.dataChannel.bufferedAmount || 0);
+        if (!force && Number.isFinite(queued) && queued > 65536) continue; // link is behind: drop stale frame
+        safeSend(conn, packet); // PeerJS serialises synchronously
+      }
+    } catch (err) { console.warn('[Dusty net] snapshot failed', err); }
+    finally { S.mg = savedMg; }
+  };
+
+  // ---- Host: trust the guest's own position when it acts ------------------
+  const dpSyncPrevInput = handleGuestInput;
+  handleGuestInput = function(id, data) {
+    const p = NET.players && NET.players[id];
+    if (p && data && Number.isFinite(data.x) && NET.gameStarted && S && !p.seat && !p.mg && !p.sit && !p.wing && S.ph !== 'boss' && S.ph !== 'cut') {
+      const x = dpClampX(data.x);
+      if (Math.abs(x - dpClampX(p.x)) < 160) p.x = x;
+    }
+    return dpSyncPrevInput(id, data);
+  };
+
+  // ---- Guest: send inputs with predicted x, drop useless key repeats -------
+  sendInput = function(code, down, repeat) {
+    if (NET.role !== 'guest' || !NET.gameStarted || !NET.hostConn || repeat) return;
+    if (code === 'ArrowLeft' || code === 'KeyA') NET.heldL = !!down;
+    if (code === 'ArrowRight' || code === 'KeyD') NET.heldR = !!down;
+    const msg = { t: 'input', code, down: !!down, repeat: false };
+    if (NET.pred && Number.isFinite(NET.pred.x)) msg.x = Math.round(NET.pred.x * 10) / 10;
+    safeSend(NET.hostConn, msg);
+  };
+  window.addEventListener('blur', () => {
+    if (NET.role !== 'guest' || !NET.gameStarted) return;
+    if (NET.heldL) sendInput('ArrowLeft', false, false);
+    if (NET.heldR) sendInput('ArrowRight', false, false);
+  });
+
+  // ---- Guest: client-side prediction of the own avatar ---------------------
+  function dpFree(me) { return !!me && !me.seat && !me.mg && !me.sit && S.ph !== 'boss' && S.ph !== 'cut' && S.ph !== 'over'; }
+  function dpWalkSpeed(me) {
+    const cls = me.cls || S.cls;
+    const puddle = Array.isArray(S.probs) && S.probs.some(q => q.t === 'puddle' && Math.abs(q.x - me.x) < 38);
+    return me.wing ? 16 : puddle ? (cls === 'cle' ? 42 : cls === 'str' ? 120 : 55) : (cls === 'run' ? 225 : cls === 'tru' ? 128 : cls === 'acr' ? 180 : 150);
+  }
+  function dpGuestPredict(dt) {
+    if (NET.role !== 'guest' || !NET.gameStarted || !S) { NET.pred = null; NET.heldL = NET.heldR = false; return; }
+    const me = NET.players[NET.selfId]; if (!me) return;
+    const pr = NET.pred || (NET.pred = { x: dpClampX(me.x), idle: 0 });
+    if (!dpFree(me)) { pr.x = dpClampX(me.x); pr.idle = 0; return; }
+    const dir = (NET.heldR ? 1 : 0) - (NET.heldL ? 1 : 0);
+    if (dir) {
+      let nx = pr.x + dir * dpWalkSpeed(me) * (S.cf > 0 ? 1.35 : 1) * dt;
+      if (me.wing) { const a = DOORS[me.wing.i], b = EXS[me.wing.i]; nx = Math.max(Math.min(a, b), Math.min(Math.max(a, b), nx)); }
+      pr.x = dpClampX(nx); pr.idle = 0;
+    } else pr.idle += dt;
+    me.x = pr.x;
+  }
+  function dpReconcile() {
+    const me = NET.players[NET.selfId]; if (!me || !S) return;
+    const pr = NET.pred || (NET.pred = { x: dpClampX(me.x), idle: 0 });
+    const server = dpClampX(me.x), err = server - pr.x;
+    if (!dpFree(me) || Math.abs(err) > 220) pr.x = server;
+    else if (NET.heldL || NET.heldR) {
+      const tol = 28 + dpWalkSpeed(me) * ((NET.ping || 120) / 1000 + .15);
+      if (Math.abs(err) > tol) pr.x += err * .12;
+    } else if (pr.idle > .35) pr.x += err * .35;
+    me.x = pr.x;
+  }
+
+  // ---- Guest: interpolate the shared world between snapshots ---------------
+  const DP_IF = ['t', 'km', 'alt', 'tilt', 'roll', 'tx', 'ty', 'tp', 'fuel', 'dark', 'ice'];
+  function dpRecordInterp() {
+    const now = performance.now(), old = NET.interp, cur = {};
+    for (const f of DP_IF) if (Number.isFinite(S[f])) cur[f] = S[f];
+    const cl = Array.isArray(S.cl) ? S.cl.map(c => [c.x, c.y]) : null;
+    const reset = old && old.cur.t > cur.t;
+    NET.interp = {
+      prev: old && !reset ? old.cur : null, prevCl: old && !reset ? old.curCl : null,
+      cur, curCl: cl, at: now,
+      gap: old ? Math.max(45, Math.min(260, old.gap * .85 + (now - old.at) * .15)) : 100
+    };
+  }
+  const dpSyncPrevApply = applySnapshot;
+  applySnapshot = function(data) {
+    const before = NET.lastSnapshotSeq;
+    dpSyncPrevApply(data);
+    if (NET.role !== 'guest' || !S || !data || (Number.isFinite(data.seq) && NET.lastSnapshotSeq === before)) return;
+    dpReconcile(); dpRecordInterp();
+  };
+  const dpSyncPrevUpd = upd;
+  upd = function(dt) { dpGuestPredict(dt); return dpSyncPrevUpd(dt); };
+  const dpSyncPrevDraw = draw;
+  draw = function() {
+    const it = NET.interp;
+    if (NET.role !== 'guest' || !NET.gameStarted || !S || !it || !it.prev || S.ph === 'boss' || S.ph === 'cut' || S.ph === 'over') return dpSyncPrevDraw();
+    const a = Math.max(0, Math.min(1.3, (performance.now() - it.at) / it.gap));
+    const saved = {};
+    for (const f in it.cur) { saved[f] = S[f]; const p = it.prev[f]; if (Number.isFinite(p)) S[f] = p + (it.cur[f] - p) * a; }
+    let savedCl = null;
+    if (Array.isArray(S.cl) && it.prevCl && it.prevCl.length === S.cl.length) {
+      savedCl = it.curCl;
+      S.cl.forEach((c, i) => { const p = it.prevCl[i]; if (Math.abs(it.curCl[i][0] - p[0]) < W / 2) c.x = p[0] + (it.curCl[i][0] - p[0]) * a; c.y = p[1] + (it.curCl[i][1] - p[1]) * a; });
+    }
+    try { return dpSyncPrevDraw(); }
+    finally {
+      for (const f in saved) S[f] = saved[f];
+      if (savedCl) S.cl.forEach((c, i) => { c.x = savedCl[i][0]; c.y = savedCl[i][1]; });
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Room creation form, random open room, chat mute, chat gating, minigame reset
+  // ---------------------------------------------------------------------------
+  NET.maxPlayers = 5; NET.isPublic = false; NET.muteAll = false; NET.mutedIds = new Set();
+  const DP_PUB_BASE = 900001, DP_PUB_COUNT = 40;
+  function dpIsMuted(id) { return !!NET.muteAll || !!(NET.mutedIds && NET.mutedIds.has(id)); }
+  function dpResetActivities(map) {
+    for (const p of Object.values(map || {})) {
+      if (!p) continue;
+      p.mg = null; p.seat = false; p.sit = false; p.wing = null; p.keys = {}; p.left = false; p.right = false;
+      p.item = null; p.inv = []; p.msg = ''; p.msgT = 0;
+    }
+  }
+  const dpMenuPriorClear = clearNetworkState;
+  clearNetworkState = function() {
+    dpMenuPriorClear();
+    NET.maxPlayers = 5; NET.squad = false; NET.isPublic = false; NET.muteAll = false; NET.mutedIds = new Set(); NET._try = 0;
+    dpRenderMuteBar(); dpApplyChatLock();
+  };
+
+  // --- tabs + create form (settings are chosen locally, the room is created afterwards) ---
+  function dpTab(create) {
+    byId('netPaneJoin').hidden = create; byId('netPaneCreate').hidden = !create;
+    byId('netTabJoin').classList.toggle('on', !create); byId('netTabCreate').classList.toggle('on', create);
+  }
+  byId('netTabJoin').addEventListener('click', () => dpTab(false));
+  byId('netTabCreate').addEventListener('click', () => dpTab(true));
+  byId('netCreateGo').addEventListener('click', async () => {
+    if (NET.busy || NET.role !== 'off') return;
+    MODE = dpFinalNormalizeMode(byId('netCfgMode').value);
+    NET.mode = MODE; NET.difficulty = dpFinalNormalizeDifficulty(byId('netCfgDiff').value);
+    byId('netMode').value = NET.mode; byId('netDifficulty').value = NET.difficulty;
+    NET.squad = byId('netCfgSquad').checked;
+    NET.maxPlayers = NET.squad ? Math.max(6, Math.min(10, parseInt(byId('netCfgMax').value, 10) || 6)) : Math.max(2, Math.min(5, parseInt(byId('netCfgMax').value, 10) || 5));
+    NET.isPublic = !byId('netCfgPrivate').checked; NET._try = 0; NET.muteAll = false; NET.mutedIds = new Set();
+    await createRoom();
+  });
+  const dpMenuPriorBusy = setBusy;
+  setBusy = function(value, targetId) {
+    dpMenuPriorBusy(value, targetId);
+    ['netCreateGo', 'netRandomBtn'].forEach(id => { const el = byId(id); if (el) el.disabled = value; });
+    byId('netCreateGo').textContent = value && targetId === 'netCreateBtn' ? tr('Создание комнаты...') : tr('Создать комнату');
+  };
+
+  // --- room summary chips + lobby payload extensions ---
+  function dpRenderRoomInfo() {
+    const box = byId('netRoomInfo'); if (!box) return;
+    const M = { free: ['Свободный полёт', 'Free flight'], inf: ['Бесконечный', 'Endless'], sto: ['Экстренная ситуация', 'Emergency'] };
+    const D = { vez: ['Очень лёгкий', 'Very easy'], easy: ['Лёгкий', 'Easy'], normal: ['Нормальный', 'Normal'], hard: ['Сложный', 'Hard'] };
+    const m = M[NET.mode] || M.free, d = D[NET.difficulty] || D.normal;
+    const items = ['✈ ' + dpL(m[0], m[1]), ...(NET.squad ? ['🪖 ' + dpL('Отряд · FC ×0.7', 'Squad · FC ×0.7')] : []), '⚙ ' + dpL(d[0], d[1]), '👥 ' + dpL('до ', 'up to ') + (NET.maxPlayers || 5),
+      NET.isPublic ? '🌐 ' + dpL('Открытая', 'Open') : '🔒 ' + dpL('Закрытая', 'Private')];
+    box.replaceChildren(...items.map(s => { const c = document.createElement('span'); c.className = 'net-chip'; c.textContent = s; return c; }));
+  }
+  const dpMenuPriorRender = renderLobby;
+  renderLobby = function() { const r = dpMenuPriorRender(); dpRenderRoomInfo(); return r; };
+  const dpMenuPriorPayload = lobbyPayload;
+  lobbyPayload = function() {
+    return { ...dpMenuPriorPayload(), max: NET.maxPlayers, squad: !!NET.squad, pub: !!NET.isPublic, muteAll: !!NET.muteAll, muted: Array.from(NET.mutedIds) };
+  };
+
+  // --- chat mute (host is the admin) ---
+  function dpToggleMute(id) {
+    if (NET.role !== 'host') return;
+    if (id === '*') NET.muteAll = !NET.muteAll;
+    else if (NET.mutedIds.has(id)) NET.mutedIds.delete(id); else NET.mutedIds.add(id);
+    broadcast({ t: 'mute', all: NET.muteAll, ids: Array.from(NET.mutedIds) });
+    dpRenderMuteBar(); dpRenderPlayers();
+  }
+  function dpRenderMuteBar() {
+    const bar = byId('dpMuteBar'); if (!bar) return;
+    const host = NET.role === 'host';
+    bar.hidden = !host; if (!host) return;
+    const frag = document.createDocumentFragment();
+    const mk = (label, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'dp-chip' + (on ? ' on' : ''); b.textContent = label; b.addEventListener('click', fn); return b; };
+    frag.appendChild(mk((NET.muteAll ? '🔇 ' : '🔊 ') + dpL('Все', 'Everyone'), NET.muteAll, () => dpToggleMute('*')));
+    for (const p of playerList()) {
+      if (p.host) continue;
+      frag.appendChild(mk((dpIsMuted(p.id) ? '🔇 ' : '🔊 ') + (p.name || 'Игрок'), dpIsMuted(p.id), () => dpToggleMute(p.id)));
+    }
+    bar.replaceChildren(frag);
+  }
+  function dpApplyChatLock() {
+    const locked = NET.role === 'guest' && dpIsMuted(NET.selfId);
+    const input = byId('dpChatInput'), send = byId('dpChatSend'); if (!input || !send) return;
+    input.disabled = locked; send.disabled = locked;
+    input.placeholder = locked ? dpL('Чат отключён хостом', 'Chat muted by the host') : dpL('Написать сообщение…', 'Write a message…');
+  }
+  const dpMenuPriorRenderPlayers = dpRenderPlayers;
+  dpRenderPlayers = function() {
+    dpMenuPriorRenderPlayers();
+    if (NET.role === 'host') {
+      byId('netPlayers').querySelectorAll('.net-player:not(.empty)').forEach((row, i) => {
+        const p = playerList()[i]; if (!p || p.host) return;
+        const b = document.createElement('button'); b.type = 'button';
+        b.className = 'net-mute' + (dpIsMuted(p.id) ? ' on' : '');
+        b.textContent = dpIsMuted(p.id) ? '🔇' : '🔊';
+        b.title = dpL('Мут чата', 'Mute chat');
+        b.addEventListener('click', () => dpToggleMute(p.id));
+        const tags = row.querySelector('.net-tags'); if (tags) tags.appendChild(b);
+      });
+    } else {
+      byId('netPlayers').querySelectorAll('.net-player:not(.empty)').forEach((row, i) => {
+        const p = playerList()[i]; if (!p || p.host || !dpIsMuted(p.id)) return;
+        const tags = row.querySelector('.net-tags'); if (tags) { const s = document.createElement('span'); s.textContent = '🔇'; tags.appendChild(s); }
+      });
+    }
+    dpRenderMuteBar(); dpApplyChatLock();
+  };
+  const dpMenuPriorSend = dpSendChat;
+  dpSendChat = function() { if (NET.role === 'guest' && dpIsMuted(NET.selfId)) return; return dpMenuPriorSend(); };
+
+  // host answers probes from "random room"; guests apply lobby/mute extensions
+  const dpMenuPriorAccept = acceptGuest;
+  acceptGuest = function(conn) {
+    dpMenuPriorAccept(conn);
+    conn.on('data', data => {
+      if (!data || typeof data !== 'object' || NET.role !== 'host' || data.t !== 'probe') return;
+      const n = Object.keys(NET.players).length, max = NET.maxPlayers || 5;
+      safeSend(conn, { t: 'info', open: !!NET.isPublic && !NET.gameStarted && n < max, n, max });
+    });
+  };
+  const dpMenuPriorHostMsg = handleHostMessage;
+  handleHostMessage = function(data) {
+    if (data && data.t === 'mute') { NET.muteAll = !!data.all; NET.mutedIds = new Set(data.ids || []); dpRenderPlayers(); return; }
+    if (data && data.t === 'lobby') {
+      NET.maxPlayers = Math.max(2, Math.min(MAX_PLAYERS, Number(data.max) || 5)); NET.isPublic = !!data.pub; NET.squad = !!data.squad;
+      NET.muteAll = !!data.muteAll; NET.mutedIds = new Set(data.muted || []);
+    }
+    if (data && data.t === 'start') {
+      // Fixes "old minigame stays after a new flight starts": wipe all participant-owned state.
+      dpResetActivities(NET.players); NET.pred = null; NET.interp = null; NET.heldL = NET.heldR = false;
+    }
+    return dpMenuPriorHostMsg(data);
+  };
+
+  // --- minigame leftovers: reset on host before start / at the end of a flight ---
+  const dpMenuPriorStart = startNetworkGame;
+  startNetworkGame = function() {
+    if (NET.role === 'host' && !NET.gameStarted) dpResetActivities(NET.players);
+    return dpMenuPriorStart();
+  };
+  const dpMenuPriorOver = over;
+  over = function(win, why) {
+    if (NET.role === 'host') dpResetActivities(NET.players);
+    return dpMenuPriorOver(win, why);
+  };
+
+  // --- random open room: probe the reserved public codes ---
+  let dpSearching = false;
+  async function dpFindRandom() {
+    if (dpSearching || NET.busy || NET.role !== 'off') return;
+    dpSearching = true;
+    const btn = byId('netRandomBtn'); btn.disabled = true;
+    let probe = null;
+    try {
+      NET.nick = currentNick();
+      setHomeStatus(dpL('Ищем открытые комнаты…', 'Looking for open rooms…'));
+      await ensurePeerJS();
+      const ice = await resolveIceServers();
+      probe = new Peer(peerOptionsWithIce(ice.iceServers));
+      await waitForPeerOpen(probe, 12000);
+      const codes = Array.from({ length: DP_PUB_COUNT }, (_, i) => String(DP_PUB_BASE + i));
+      const found = [], settled = new Set();
+      await new Promise(resolve => {
+        const timer = setTimeout(resolve, 4500);
+        const settle = code => { settled.add(code); if (settled.size >= codes.length) { clearTimeout(timer); resolve(); } };
+        probe.on('error', err => { const m = /dustyplane-(\d{6})/.exec(String(err && err.message || '')); if (m) settle(m[1]); });
+        for (const code of codes) {
+          const conn = probe.connect(ROOM_PREFIX + code, { reliable: true, serialization: 'json' });
+          conn.on('open', () => safeSend(conn, { t: 'probe' }));
+          conn.on('data', d => { if (d && d.t === 'info') { if (d.open) found.push(code); settle(code); try { conn.close(); } catch (_) {} } });
+          conn.on('error', () => settle(code));
+        }
+      });
+      try { probe.destroy(); } catch (_) {} probe = null;
+      if (!found.length) { setHomeStatus(dpL('Открытых комнат не найдено. Создайте свою или попробуйте ещё раз.', 'No open rooms found. Create your own or try again.')); return; }
+      const code = found[Math.floor(Math.random() * found.length)];
+      byId('netCodeInput').value = code;
+      setHomeStatus(dpL('Нашли комнату {code}. Подключаемся…', 'Found room {code}. Joining…'), { code });
+      dpSearching = false; btn.disabled = false;
+      await joinRoom();
+    } catch (err) {
+      console.warn('[Dusty net random]', err);
+      setHomeStatus(dpL('Не удалось выполнить поиск комнат: ', 'Room search failed: ') + (err && (err.message || err.type) || ''));
+    } finally {
+      try { if (probe) probe.destroy(); } catch (_) {}
+      dpSearching = false; btn.disabled = false;
+    }
+  }
+  byId('netRandomBtn').addEventListener('click', dpFindRandom);
+
+  // --- chat button only while truly connected to a room ---
+  function dpNetActive() {
+    return (NET.role === 'host' && !!NET.selfId && !!NET.peer && !NET.peer.destroyed) ||
+           (NET.role === 'guest' && !!NET.selfId && !!NET.hostConn && !!NET.hostConn.open);
+  }
+  function dpChatGate() {
+    const on = dpNetActive();
+    document.documentElement.classList.toggle('dp-net', on);
+    if (!on) { byId('dpChatPanel').hidden = true; byId('dpChatToggle').setAttribute('aria-expanded', 'false'); }
+  }
+  const dpMenuPriorVis = dpRefreshChatVisibility;
+  dpRefreshChatVisibility = function() { dpChatGate(); return dpMenuPriorVis(); };
+  window.setInterval(dpChatGate, 250);
+  byId('dpChatToggle').addEventListener('click', () => { dpRenderMuteBar(); dpApplyChatLock(); });
+  dpChatGate(); dpRenderRoomInfo(); dpRenderMuteBar();
+
+  // --- Squad mode: 6-10 players, FC multiplier fixed at x0.7 whatever the difficulty ---
+  NET.squad = false;
+  function dpFillMax() {
+    const sel = byId('netCfgMax'), squad = byId('netCfgSquad').checked;
+    const lo = squad ? 6 : 2, hi = squad ? 10 : 5;
+    sel.replaceChildren(...Array.from({ length: hi - lo + 1 }, (_, i) => {
+      const o = document.createElement('option'); o.value = o.textContent = String(lo + i); if (lo + i === hi && !squad || lo + i === 6 && squad) o.selected = true; return o;
+    }));
+  }
+  byId('netCfgSquad').addEventListener('change', dpFillMax);
+  const dpSquadPrevStart = start;
+  start = function(k) {
+    const r = dpSquadPrevStart(k);
+    if (NET.role !== 'off' && NET.squad && typeof S !== 'undefined' && S && S.D) S.D = { ...S.D, c: 0.7 };
+    return r;
+  };
 
 })();
 </script>
