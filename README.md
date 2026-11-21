@@ -1,20 +1,38 @@
-# Dusty-Plane
-A test game created using the Claude AI model Sonnet 5.5 (High). Your objective is to survive on an airplane and repair various malfunctions.
-Check out the new releases to download the game.
-This game is built using JavaScript (in .HTML format) and is quite challenging. It is written entirely in code, utilizing the SVG format instead of standard PNG images.
-While versions may vary, they all feature the following mechanics:
-- The objective is to fly 3,000 km in a makeshift, semi-homemade aircraft.
-- The closer you get to the destination, the higher the difficulty.
-Malfunctions:
-Holes: These can appear anywhere on the aircraft. You need electrical tape to patch them. They rapidly—though gradually—deplete oxygen levels and lower the temperature inside the plane.
-Burning pipes: There is a small chance that pipes may catch fire; these can be repaired using a welder. They significantly raise the temperature, consume oxygen, and pose a fire hazard.
-Puddles: These simply slow the player down and require a mop to clean up. If the temperature inside the plane gets too high, they can catch fire, causing damage, further increasing the temperature, and consuming oxygen.
-Attacks:
-FMRA aircraft: A siren may trigger, accompanied by a 15-second countdown. If the player fails to react in time, one of the engines will shut down. If the player manages to reach the controls before the 15 seconds are up, they must steer in a specific direction to dodge an incoming missile.
-Birds: Similar to the FMRA encounter, the player is given a few seconds to react. You must toggle the engines off and back on; otherwise, there will be a massive explosion.
+# Mult — финальная сборка с автоматическим TURN
 
-You can discover the rest for yourself.
+В этой сборке API Key Metered не находится в `index.html`. Браузер запрашивает TURN-настройки у серверной функции `/api/turn`, а функция получает их у Metered с помощью переменных окружения Vercel.
 
-The game is inspired by *Rusty Plane* and *Land or Die!* from Roblox.
-Rusty Plane: https://www.roblox.com/games/84726337419858/Rusty-Plane
-Land or Die! : https://www.roblox.com/games/75547400568620/Land-or-Die
+## Структура
+
+- `index.html` — клиент Mult.
+- `api/turn.js` — серверная функция Vercel. Не переносите её код в HTML.
+
+## Настройка Vercel
+
+1. Создайте отдельный Vercel-проект для Mult и загрузите в его корень `index.html` и папку `api/` из этого архива.
+2. В Vercel откройте **Project → Settings → Environment Variables**.
+3. Добавьте `METERED_APP_DOMAIN` — только домен приложения Metered, например `myapp.metered.live` (без `https://` и без пути).
+4. Добавьте `METERED_TURN_API_KEY` — именно **TURN Credential API Key** из строки TURN Credential → Get credential → Show API Key. Не используйте общий Secret Key из Developers.
+5. Для `METERED_TURN_API_KEY` выберите тип **Secret**. Для `METERED_APP_DOMAIN` подойдёт **Config**.
+6. Сохраните переменные и сделайте новый Deploy / Redeploy.
+7. Откройте адрес Vercel-проекта. В Mult перейдите в список комнат и нажмите **«Проверить TURN-службу»**.
+
+После успешной проверки игрокам не нужно вводить API URL или ключ. Все клиенты, открывшие Mult с этого Vercel-домена, используют один серверный маршрут `/api/turn`.
+
+## Важно о безопасности
+
+- Никогда не добавляйте API Key в `index.html`, GitHub или клиентский JavaScript.
+- Никогда не используйте общий Metered Secret Key в браузере. Здесь нужен отдельный Credential API Key.
+- Браузер всё равно получает `iceServers` с TURN username/password: это необходимые параметры WebRTC. Скрытым остаётся основной API Key.
+- В функции нет логирования API Key или полного upstream URL. Добавлено простое ограничение частоты запросов на экземпляр функции; это дополнительная мера, а не полноценная распределённая защита от злоупотреблений.
+- Если ключ случайно попал в публичный репозиторий или чат, отзовите/пересоздайте его в Metered Dashboard.
+
+## Лимит трафика
+
+В интерфейсе Mult показано предупреждение о 500 МБ/месяц — это значение, указанное владельцем проекта для его текущего бесплатного аккаунта. Проверяйте фактическую квоту в Metered Dashboard: публичная страница Open Relay может показывать другое предложение или условия для других аккаунтов.
+
+TURN расходуется только когда WebRTC выбрал релейный маршрут. При прямом P2P-маршруте данные идут напрямую между игроками. Если лимит TURN исчерпан, прямой P2P всё ещё может работать, но соединения, которым нужен TURN, могут перестать устанавливаться.
+
+## Где это работает
+
+Поскольку `/api/turn` — серверная функция, эту сборку нужно запускать с Vercel (или на другом хостинге, где аналогичная функция развёрнута по тому же пути). Если открыть `index.html` как локальный файл или разместить только на статическом GitHub Pages, серверного `/api/turn` не будет, и Mult перейдёт на встроенные ICE-серверы PeerJS.
