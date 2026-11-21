@@ -199,6 +199,24 @@ html:not(.dp-net) #dpChatRoot{display:none!important}
 @keyframes dprIn{from{opacity:0}to{opacity:1}}
 @media(max-width:520px){.dpr-card{padding:16px}.dpr-actions{grid-template-columns:1fr}}
 
+/* result window: details + help bar */
+.dpr-item{display:flex;flex-direction:column}
+#dpResult button.dpr-info{flex:0 0 24px;width:24px;height:24px;margin:0;padding:0;border-radius:50%;background:transparent;border:2px solid #fff;color:#fff;font:italic 700 13px/1 Georgia,serif;display:grid;place-items:center}
+#dpResult button.dpr-info:hover:not(:disabled){background:rgba(255,255,255,.2)}
+#dpResult button.dpr-info.on{background:#fff;color:#10131c}
+.dpr-detail{display:grid;gap:5px;margin:-3px 4px 2px;padding:10px 12px;border-radius:0 0 11px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-top:0}
+.dpr-detail[hidden]{display:none}
+.dpr-drow{display:flex;justify-content:space-between;gap:14px;font-size:.78rem}
+.dpr-drow span{opacity:.72}.dpr-drow b{text-align:right}
+#dprHelp{margin:0 0 14px}
+.dpr-help-title{margin:2px 0 6px;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.65}
+.dpr-bar{display:flex;height:28px;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.08)}
+.dpr-seg{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 6px;font-size:.68rem;font-weight:800;color:#10131c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dpr-legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:.72rem}
+.dpr-legend span{display:inline-flex;align-items:center;gap:5px}
+.dpr-legend i{width:10px;height:10px;border-radius:3px;background:var(--pc)}
+.dpr-help-empty{font-size:.72rem;opacity:.6;margin-top:6px}
+
 </style><style id="dpChatStyles">
 
 #dpChatRoot{position:fixed!important;right:14px;top:calc(14px + env(safe-area-inset-top,0px));z-index:2147483647!important;font-family:system-ui,sans-serif;color:#f7f4ee;pointer-events:none}
@@ -530,10 +548,10 @@ function upd(dt){
   }
  }
  vit(dt);evx(dt);if(S.story)stTick(dt);if(S.km>=S.goal&&(!S.story||!S.bos)){S.ph='land';S.lt=0;S.ev=null;toast('Заходим на посадку...',5);return}
- if(S.hp<=0)return over(false,S.o2<=0?'Вы задохнулись.':S.tp<2?'Вы замёрзли.':'Вы погибли.');
+ if(S.hp<=0||(window.dpMpAllDead&&dpMpAllDead())){const r=window.dpMpDeath?dpMpDeath():null;if(r!==true)return over(false,typeof r==='string'?r:(S.o2<=0?'Вы задохнулись.':S.tp<2?'Вы замёрзли.':'Вы погибли.'))}
  if(S.pr<=20)return over(false,'Разгерметизация кабины.');
  
- if(S.alt<=0){if(UL('pa')&&!S.pu1){S.pu1=1;S.alt=1500;S.fv=0;S.hp=Math.max(10,S.hp-30);S.flash=1;toast('Парашют-тормоз раскрылся! Самолёт спасён (−30% здоровья)',5)}else return over(false,'Самолёт упал.')}
+ if(S.alt<=0){if(UL('pa')&&!S.pu1){S.pu1=1;S.alt=1500;S.fv=0;S.hp=Math.max(10,S.hp-30);if(window.dpSharedHurt)dpSharedHurt(30);S.flash=1;toast('Парашют-тормоз раскрылся! Самолёт спасён (−30% здоровья)',5)}else return over(false,'Самолёт упал.')}
  if(fires>=4)return over(false,'Пожар вызвал взрыв.');
 }
 function bar(x,y,l,v,col,txt){
@@ -2924,6 +2942,15 @@ requestAnimationFrame(loop);
       X.fillRect(x - nickWidth / 2, nickY - 12, nickWidth, 16);
       X.fillStyle = isHostPlayer ? 'rgba(255,225,170,.98)' : '#fff';
       X.fillText(displayName.slice(0, 18), x, nickY);
+      {
+        const selfHost = isHostPlayer && NET.role === 'host';
+        const hpv = selfHost ? S.hp : p.hp, hpmv = selfHost ? S.hpm : p.hpm;
+        if (p.dead) { X.font = 'bold 16px system-ui'; X.fillStyle = '#fff'; X.fillText('\u2620', x, FLOOR - 48); }
+        else if (Number.isFinite(hpv) && Number.isFinite(hpmv) && hpmv > 0 && hpv < hpmv) {
+          X.fillStyle = 'rgba(0,0,0,.75)'; X.fillRect(x - 21, nickY + 7, 42, 5);
+          X.fillStyle = hpv / hpmv < .3 ? '#ff3b30' : '#4ade80'; X.fillRect(x - 20, nickY + 8, 40 * Math.max(0, hpv / hpmv), 3);
+        }
+      }
 
       const heldItem = isHostPlayer && NET.role === 'host' ? S.item : p.item;
       if (heldItem && typeof TN !== 'undefined' && TN[heldItem]) {
@@ -3213,7 +3240,7 @@ requestAnimationFrame(loop);
 
   function dpWithPlayerContext(player, callback) {
     if (!S || !player) return;
-    const fields = ['px','item','inv','mg','seat','sit','wing','cls','msg','msgT'];
+    const fields = ['px','item','inv','mg','seat','sit','wing','cls','msg','msgT','hp','hpm'];
     const saved = {};
     for (const field of fields) saved[field] = S[field];
     const keyNames = ['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyA','KeyD','KeyE','KeyF','KeyG','KeyR','KeyQ','Digit1','Digit2','Digit3','Digit4','Digit5','Escape'];
@@ -3229,6 +3256,7 @@ requestAnimationFrame(loop);
     S.seat = !!player.seat;
     S.sit = !!player.sit;
     S.wing = player.wing ? {...player.wing} : null;
+    if (Number.isFinite(player.hp)) { S.hp = player.hp; S.hpm = Number(player.hpm) || S.hpm; }
     if (player.cls) S.cls = player.cls;
     // Personal notifications take priority; otherwise retain shared world alerts.
     if (player.msg && Number(player.msgT) > 0) { S.msg = player.msg; S.msgT = player.msgT; }
@@ -3241,6 +3269,7 @@ requestAnimationFrame(loop);
       player.seat = !!S.seat;
       player.sit = !!S.sit;
       player.wing = S.wing ? {...S.wing} : null;
+      if (Number.isFinite(player.hp)) player.hp = S.hp;
       player.cls = player.cls || saved.cls || 'pil';
       if (S.msg !== saved.msg || S.msgT !== saved.msgT) { player.msg = S.msg || ''; player.msgT = Number(S.msgT) || 0; }
       for (const field of fields) S[field] = saved[field];
@@ -3470,7 +3499,8 @@ requestAnimationFrame(loop);
         wing:dpClone(host && S ? S.wing : p.wing),
         keys:host ? {} : {...(p.keys || {})},
         msg:host && S ? (S.msg || '') : (p.msg || ''),
-        msgT:host && S ? (Number(S.msgT) || 0) : (Number(p.msgT) || 0)
+        msgT:host && S ? (Number(S.msgT) || 0) : (Number(p.msgT) || 0),
+        hp:host && S ? S.hp : p.hp, hpm:host && S ? S.hpm : p.hpm, dead:!!p.dead, cause:p.cause || ''
       };
       return activity;
     });
@@ -3878,6 +3908,7 @@ requestAnimationFrame(loop);
   const dpSyncPrevInput = handleGuestInput;
   handleGuestInput = function(id, data) {
     const p = NET.players && NET.players[id];
+    if (p && p.dead) return;
     if (p && data && Number.isFinite(data.x) && NET.gameStarted && S && !p.seat && !p.mg && !p.sit && !p.wing && S.ph !== 'boss' && S.ph !== 'cut') {
       const x = dpClampX(data.x);
       if (Math.abs(x - dpClampX(p.x)) < 160) p.x = x;
@@ -3901,7 +3932,7 @@ requestAnimationFrame(loop);
   });
 
   // ---- Guest: client-side prediction of the own avatar ---------------------
-  function dpFree(me) { return !!me && !me.seat && !me.mg && !me.sit && S.ph !== 'boss' && S.ph !== 'cut' && S.ph !== 'over'; }
+  function dpFree(me) { return !!me && !me.dead && !me.seat && !me.mg && !me.sit && S.ph !== 'boss' && S.ph !== 'cut' && S.ph !== 'over'; }
   function dpWalkSpeed(me) {
     const cls = me.cls || S.cls;
     const puddle = Array.isArray(S.probs) && S.probs.some(q => q.t === 'puddle' && Math.abs(q.x - me.x) < 38);
@@ -4315,27 +4346,37 @@ requestAnimationFrame(loop);
     if (typeof prev !== 'function') return;
     window[name] = function(...args) {
       if (NET.role !== 'host' || !NET.gameStarted || !S || dpAttrDepth > 0) return prev.apply(this, args);
-      const before = S.fc, flag = NET.hostMgFlag;
+      const before = S.fc, flag = NET.hostMgFlag, probs0 = Array.isArray(S.probs) ? S.probs.length : 0, ev0 = S.ev && S.ev.k;
       if (!NET.activePlayerId) NET.hostMgFlag = !!S.mg;
       dpAttrDepth++;
       try { return prev.apply(this, args); }
       finally {
         dpAttrDepth--; NET.hostMgFlag = flag;
         const d = S.fc - before;
-        if (d > 0) { const id = NET.activePlayerId || NET.selfId; NET.fcOwn[id] = (NET.fcOwn[id] || 0) + d; }
+        const who = NET.activePlayerId || NET.selfId;
+        if (d > 0) NET.fcOwn[who] = (NET.fcOwn[who] || 0) + d;
+        const st = dpStat(who), dec = probs0 - (Array.isArray(S.probs) ? S.probs.length : 0);
+        if (dec > 0) st.repairs += dec;
+        if (name === 'key' && args[0] === 'KeyF' && (ev0 === 'br' || ev0 === 'bp') && !S.ev) st.engOff++;
       }
     };
   }
   ['key', 'done', 'fuUpd', 'tpUpd', 'ptr'].forEach(dpFcWrap);
   const dpFcPrevStart = start;
-  start = function(k) { if (NET.role === 'host') NET.fcOwn = {}; return dpFcPrevStart(k); };
-  function dpComputeEarns(win) {
-    const list = playerList(), own = NET.fcOwn || {};
+  start = function(k) { const r = dpFcPrevStart(k); if (NET.role === 'host') { NET.fcOwn = {}; NET.stats = {}; NET.runStart = Date.now(); dpInitVitals(); } return r; };
+  function dpEarnParts(win) {
+    const list = playerList(), own = NET.fcOwn || {}, m = fcm(), t0 = NET.runStart || Date.now();
+    const total = Math.max(1, (Date.now() - t0) / 1000);
     let sum = 0; list.forEach(p => { sum += own[p.id] || 0; });
-    const shared = Math.max(0, (S.fc || 0) - sum), m = fcm(), bonus = win ? Math.round(50 * m) : 0, out = {};
-    list.forEach(p => { out[p.id] = Math.floor(((own[p.id] || 0) + shared) * m) + bonus; });
+    const shared = Math.max(0, (S.fc || 0) - sum), out = {};
+    list.forEach(p => {
+      const frac = p.dead ? Math.max(0, Math.min(1, ((p.diedAt || Date.now()) - t0) / 1000 / total)) : 1;
+      const ownFc = Math.floor((own[p.id] || 0) * m), sharedFc = Math.floor(shared * frac * m), bonus = win && !p.dead ? Math.round(50 * m) : 0;
+      out[p.id] = { ownFc, sharedFc, bonus, earn: ownFc + sharedFc + bonus };
+    });
     return out;
   }
+  function dpComputeEarns(win) { const parts = dpEarnParts(win), o = {}; for (const id in parts) o[id] = parts[id].earn; return o; }
 
   // ---------- 3) synced sounds ----------
   const dpSfxPrevCtx = dpWithPlayerContext;
@@ -4398,7 +4439,7 @@ requestAnimationFrame(loop);
   function dpEnsureResultDom() {
     if (byId('dpResult')) return;
     const el = document.createElement('div'); el.id = 'dpResult'; el.hidden = true;
-    el.innerHTML = '<div class="dpr-card" id="dprCard"><div class="dpr-badge" id="dprBadge"></div><h2 id="dprTitle"></h2><p id="dprWhy"></p><div id="dprMeta"></div><div id="dprList"></div>' +
+    el.innerHTML = '<div class="dpr-card" id="dprCard"><div class="dpr-badge" id="dprBadge"></div><h2 id="dprTitle"></h2><p id="dprWhy"></p><div id="dprMeta"></div><div id="dprList"></div><div id="dprHelp"></div>' +
       '<div class="dpr-actions"><button id="dprLeave" type="button"></button><button id="dprCont" type="button"></button></div><div id="dprHint"></div></div>';
     document.body.appendChild(el);
     byId('dprLeave').addEventListener('click', () => { if (!NET.res || NET.res.pressed) return; leaveRoom(); });
@@ -4429,15 +4470,7 @@ requestAnimationFrame(loop);
     byId('dprTitle').textContent = win ? dpL('ПОБЕДА', 'VICTORY') : dpL('ПОРАЖЕНИЕ', 'DEFEAT');
     byId('dprWhy').textContent = (win ? '' : dpL('Причина: ', 'Cause: ')) + (msg.why || '');
     byId('dprMeta').textContent = dpL('Пройдено: ', 'Distance: ') + (msg.km || 0) + dpL(' км · Сложность: ', ' km · Difficulty: ') + (msg.diff || '—') + (msg.squad ? dpL(' · Отряд FC ×0.7', ' · Squad FC ×0.7') : '');
-    const list = byId('dprList'); list.replaceChildren();
-    [...(msg.players || [])].sort((a, b) => b.earn - a.earn).forEach(p => {
-      const row = document.createElement('div'); row.className = 'dpr-row' + (p.id === NET.selfId ? ' me' : ''); row.style.setProperty('--pc', p.color || '#ffb347');
-      const dot = document.createElement('span'); dot.className = 'dpr-dot';
-      const name = document.createElement('span'); name.className = 'dpr-name'; name.textContent = p.name || 'Игрок';
-      if (p.id === NET.selfId) { const s = document.createElement('small'); s.textContent = dpL('вы', 'you'); name.appendChild(s); }
-      const fc = document.createElement('span'); fc.className = 'dpr-fc'; fc.textContent = '+' + (p.earn || 0) + ' FC';
-      row.append(dot, name, fc); list.appendChild(row);
-    });
+    dpRenderResultRows(msg);
     byId('dpResult').hidden = false;
     dpRenderResultButtons();
     clearInterval(dpShowResult.t);
@@ -4490,7 +4523,7 @@ requestAnimationFrame(loop);
       const reason = String(why || '');
       const msg = {
         t: 'result', win: !!win, why: reason, kind: win ? 'win' : (/упал|взрыв|сбил/i.test(reason) ? 'boom' : 'cough'), km, diff, squad: !!NET.squad,
-        players: playerList().map(p => ({ id: p.id, name: p.name, color: p.color, earn: earns[p.id] || 0 }))
+        players: dpBuildResultPlayers(earns, !!win, dpCauseKey(reason))
       };
       if (NET.resHost) clearInterval(NET.resHost.timer);
       NET.resHost = { cont: new Set(), endsAt: 0, sig: '' };
@@ -4510,6 +4543,220 @@ requestAnimationFrame(loop);
     if (data && data.t === 'sfx') { dpPlaySfx(data.s); return; }
     if (data && data.t === 'start') { dpHideResult(); NET.lmg = null; NET.mgDone = null; NET.lkeys = {}; }
     return dpResPriorHostMsg(data);
+  };
+
+  // ---------- result details: per-player stats + help bar ----------
+  NET.stats = {}; NET.runStart = 0;
+  function dpStat(id) { return NET.stats[id] || (NET.stats[id] = { repairs: 0, dodgeOk: 0, dodgeFail: 0, engOff: 0 }); }
+  ['fmOk', 'fmFail'].forEach(name => {
+    const prev = window[name];
+    if (typeof prev !== 'function') return;
+    window[name] = function(...a) {
+      // count only manoeuvres a player actually performed (not the order timing out)
+      if (NET.role === 'host' && NET.gameStarted && dpAttrDepth > 0) {
+        const st = dpStat(NET.activePlayerId || NET.selfId);
+        if (name === 'fmOk') st.dodgeOk++; else st.dodgeFail++;
+      }
+      return prev.apply(this, a);
+    };
+  });
+  function dpCauseKey(why) {
+    const w = String(why || '');
+    if (/задохн/i.test(w)) return 'o2';
+    if (/замёрз|замерз/i.test(w)) return 'cold';
+    if (/разгерметиз/i.test(w)) return 'decomp';
+    if (/торнадо/i.test(w)) return 'storm';
+    if (/пожар|взрыв|огн/i.test(w)) return 'fire';
+    if (/упал/i.test(w)) return 'crash';
+    if (/сбил/i.test(w)) return 'fmra';
+    return 'other';
+  }
+  const DP_CAUSE = {
+    o2: ['Нехватка кислорода', 'Lack of oxygen'], cold: ['Холод', 'Freezing'], decomp: ['Разгерметизация кабины', 'Cabin decompression'],
+    fire: ['Огонь и взрыв', 'Fire and explosion'], crash: ['Падение самолёта', 'Plane crash'], storm: ['Торнадо и тряска', 'Tornado turbulence'], fmra: ['Сбит истребителем FMRA', 'Shot down by FMRA'], other: ['Смертельные травмы', 'Fatal injuries']
+  };
+  function dpBuildResultPlayers(earns, win, causeKey) {
+    const list = playerList(), parts = dpEarnParts(win), t0 = NET.runStart || Date.now(), now = Date.now();
+    const pts = {}; let total = 0;
+    list.forEach(p => { const s = dpStat(p.id); pts[p.id] = s.repairs + 2 * s.dodgeOk + 2 * s.engOff; total += pts[p.id]; });
+    return list.map(p => {
+      const s = dpStat(p.id), pr = parts[p.id] || { ownFc: 0, sharedFc: 0, bonus: 0 }, dead = !!p.dead;
+      return {
+        id: p.id, name: p.name, color: p.color, earn: earns[p.id] || 0,
+        st: { survived: !!win && !dead, aliveSec: Math.max(0, Math.round(((dead ? p.diedAt : now) - t0) / 1000)), cause: dead ? (p.cause || 'other') : (win ? '' : causeKey),
+              repairs: s.repairs, dodgeOk: s.dodgeOk, dodgeFail: s.dodgeFail, engOff: s.engOff, ownFc: pr.ownFc, sharedFc: pr.sharedFc, bonus: pr.bonus,
+              help: total > 0 ? Math.round(pts[p.id] * 1000 / total) / 10 : null }
+      };
+    });
+  }
+  function dpFmtTime(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function dpRenderResultRows(msg) {
+    const list = byId('dprList'); list.replaceChildren();
+    const players = [...(msg.players || [])];
+    [...players].sort((a, b) => b.earn - a.earn).forEach(p => {
+      const item = document.createElement('div'); item.className = 'dpr-item';
+      const row = document.createElement('div'); row.className = 'dpr-row' + (p.id === NET.selfId ? ' me' : ''); row.style.setProperty('--pc', p.color || '#ffb347');
+      const dot = document.createElement('span'); dot.className = 'dpr-dot';
+      const name = document.createElement('span'); name.className = 'dpr-name'; name.textContent = p.name || 'Игрок';
+      if (p.id === NET.selfId) { const s = document.createElement('small'); s.textContent = dpL('вы', 'you'); name.appendChild(s); }
+      const fc = document.createElement('span'); fc.className = 'dpr-fc'; fc.textContent = '+' + (p.earn || 0) + ' FC';
+      const info = document.createElement('button'); info.type = 'button'; info.className = 'dpr-info'; info.textContent = 'i';
+      info.title = dpL('Подробности', 'Details'); info.setAttribute('aria-expanded', 'false');
+      row.append(dot, name, fc, info);
+      const det = document.createElement('div'); det.className = 'dpr-detail'; det.hidden = true;
+      const st = p.st || {};
+      const cause = DP_CAUSE[st.cause] || DP_CAUSE.other;
+      const rows = [
+        [dpL('Исход', 'Outcome'), st.survived ? dpL('Выжил', 'Survived') : dpL('Погиб', 'Died')],
+        [st.survived ? dpL('Время в полёте', 'Time in flight') : dpL('Прожил', 'Survived for'), dpFmtTime(st.aliveSec || 0)],
+        ...(st.survived ? [] : [[dpL('Причина гибели', 'Cause of death'), dpL(cause[0], cause[1])]]),
+        [dpL('Починено поломок', 'Repairs made'), st.repairs || 0],
+        [dpL('Уклонений от FMRA', 'FMRA dodges'), (st.dodgeOk || 0) + dpL(' из ', ' of ') + ((st.dodgeOk || 0) + (st.dodgeFail || 0))],
+        [dpL('Двигатели выключены при атаке птиц', 'Engines cut during bird strikes'), st.engOff || 0],
+        [dpL('FC за мини-игры и задания', 'FC from minigames & tasks'), '+' + (st.ownFc || 0)],
+        [dpL('FC за расстояние и общие бонусы', 'FC from distance & shared bonuses'), '+' + (st.sharedFc || 0)],
+        ...(st.bonus ? [[dpL('Бонус за победу', 'Victory bonus'), '+' + st.bonus]] : []),
+        [dpL('Помощь команде', 'Team help'), st.help == null ? '—' : st.help + '%']
+      ];
+      rows.forEach(([k, v]) => {
+        const r = document.createElement('div'); r.className = 'dpr-drow';
+        const a = document.createElement('span'); a.textContent = k; const b = document.createElement('b'); b.textContent = String(v);
+        r.append(a, b); det.appendChild(r);
+      });
+      info.addEventListener('click', () => { const open = det.hidden; det.hidden = !open; info.classList.toggle('on', open); info.setAttribute('aria-expanded', String(open)); });
+      item.append(row, det); list.appendChild(item);
+    });
+    // team-help bar
+    const help = byId('dprHelp'); help.replaceChildren();
+    const title = document.createElement('div'); title.className = 'dpr-help-title'; title.textContent = dpL('Помощь команде', 'Team help'); help.appendChild(title);
+    const ranked = players.filter(p => p.st && p.st.help != null).sort((a, b) => b.st.help - a.st.help);
+    const bar = document.createElement('div'); bar.className = 'dpr-bar';
+    if (ranked.some(p => p.st.help > 0)) {
+      ranked.filter(p => p.st.help > 0).forEach(p => {
+        const seg = document.createElement('div'); seg.className = 'dpr-seg';
+        seg.style.flex = p.st.help + ' 0 0'; seg.style.background = p.color || '#ffb347';
+        seg.textContent = (p.name || 'Игрок') + ' ' + p.st.help + '%'; seg.title = seg.textContent;
+        bar.appendChild(seg);
+      });
+      help.appendChild(bar);
+      const legend = document.createElement('div'); legend.className = 'dpr-legend';
+      ranked.forEach(p => { const s = document.createElement('span'); s.style.setProperty('--pc', p.color || '#ffb347'); const i = document.createElement('i'); s.append(i, document.createTextNode((p.name || 'Игрок') + ' — ' + p.st.help + '%')); legend.appendChild(s); });
+      help.appendChild(legend);
+    } else {
+      help.appendChild(bar);
+      const e = document.createElement('div'); e.className = 'dpr-help-empty'; e.textContent = dpL('В этом рейсе никто не успел помочь команде.', 'Nobody had time to help the team this flight.'); help.appendChild(e);
+    }
+  }
+
+  // ---------- individual health & death in multiplayer (host-authoritative) ----------
+  function dpInitVitals() {
+    for (const p of Object.values(NET.players || {})) {
+      if (!p) continue;
+      const hm = p.host && S ? S.hpm : (p.cls === 'str' ? 200 : 100);
+      p.dead = false; p.cause = ''; p.diedAt = 0; p._src = ''; p.hpm = hm; p.hp = p.host && S ? S.hp : hm;
+    }
+  }
+  function dpRates() {
+    const r = { o2: 0, cold: 0, fire: 0, storm: 0 };
+    if (S.o2 <= 0) r.o2 = 4; else if (S.o2 / S.o2m < .12) r.o2 = 1.2;
+    if (S.tp < 2) r.cold = (2 - S.tp) * .04;
+    for (const q of S.probs) if (q.t === 'puddle' && q.b && S.cls !== 'fir' && Math.abs(q.x - S.px) < 38 && !S.wing) r.fire += 8 * (UL('sf') ? .5 : 1);
+    if (S.ev && S.ev.k === 'tn' && S.ev.ph === 'go' && !S.sit && !S.seat && !S.wing && S.cls !== 'acr') r.storm = 6;
+    return r;
+  }
+  function dpTopSrc(r) { let best = '', v = 0; for (const k in r) if (r[k] > v) { v = r[k]; best = k; } return best; }
+  function dpKill(p, src, isHost) {
+    p.dead = true; p.hp = 0; p.diedAt = Date.now(); p.cause = src || 'other';
+    p.mg = null; p.seat = false; p.sit = false; p.wing = null; p.item = null; p.inv = []; p.left = false; p.right = false; p.keys = {};
+    if (isHost) { S.hp = 0; S.mg = null; S.seat = false; S.sit = false; S.wing = null; S.item = null; S.inv = []; }
+    const c = DP_CAUSE[p.cause] || DP_CAUSE.other;
+    toast((p.name || 'Игрок') + dpL(' погиб: ', ' died: ') + dpL(c[0], c[1]), 5);
+    beep(110, .5, .09);
+  }
+  function dpRemoteVitals(dt) {
+    for (const p of Object.values(NET.players || {})) {
+      if (!p || p.host || p.dead || !Number.isFinite(p.hp)) continue;
+      let src = '';
+      dpWithPlayerContext(p, () => {
+        const r = dpRates(), d = r.o2 + r.cold + r.fire + r.storm;
+        S.hp = d > 0 ? Math.max(0, S.hp - d * dt * (S.cls === 'doc' ? .6 : 1))
+                     : Math.min(S.hpm, S.hp + dt * (S.cls === 'doc' ? (S.sit ? 6 : 3) : 1) + (S.radio && UL('au') ? 1.2 * dt : 0));
+        if (d > 0) src = dpTopSrc(r);
+      });
+      if (src) p._src = src;
+      if (p.hp <= 0) dpKill(p, p._src || 'other', false);
+    }
+  }
+  const dpVitPrev = window.vit;
+  window.vit = function(dt) {
+    dpVitPrev(dt);
+    if (NET.role !== 'host' || !NET.gameStarted || !S) return;
+    const me = NET.players[NET.selfId];
+    if (me) {
+      if (me.dead) S.hp = 0;
+      else { const src = dpTopSrc(dpRates()); if (src) me._src = src; me.hp = S.hp; me.hpm = S.hpm; }
+    }
+    dpRemoteVitals(dt);
+  };
+  const dpBoomPrev = window.boom;
+  window.boom = function(x) {
+    dpBoomPrev(x);
+    if (NET.role !== 'host' || !NET.gameStarted) return;
+    for (const p of Object.values(NET.players || {})) {
+      if (!p || p.host || p.dead || !Number.isFinite(p.hp)) continue;
+      if (Math.abs(p.x - x) < 70 && !p.wing && p.cls !== 'fir') { p.hp = Math.max(1, p.hp - 12); p.msg = 'Взрыв трубы! −12% здоровья'; p.msgT = 3; }
+    }
+  };
+  window.dpSharedHurt = function(n) {
+    if (NET.role !== 'host') return;
+    for (const p of Object.values(NET.players || {})) if (p && !p.host && !p.dead && Number.isFinite(p.hp)) p.hp = Math.max(10, p.hp - n);
+  };
+  window.dpMpAllDead = function() {
+    if (NET.role !== 'host' || !NET.gameStarted) return false;
+    const list = playerList(); return list.length > 0 && list.every(p => p.dead);
+  };
+  window.dpMpDeath = function() {
+    if (NET.role !== 'host' || !NET.gameStarted) return null;
+    const me = NET.players[NET.selfId];
+    if (me && !me.dead) dpKill(me, me._src || 'other', true);
+    if (playerList().some(p => !p.dead)) return true; // the rest of the crew keeps flying
+    const last = playerList().sort((a, b) => (b.diedAt || 0) - (a.diedAt || 0))[0];
+    return ({ o2: 'Экипаж задохнулся.', cold: 'Экипаж замёрз.', fire: 'Экипаж погиб в огне.', storm: 'Экипаж погиб в торнадо.' })[last && last.cause] || 'Весь экипаж погиб.';
+  };
+  // a dead host cannot act or walk
+  const dpVitPrevKey = window.key;
+  window.key = function() {
+    if (NET.role === 'host' && NET.gameStarted && !NET.activePlayerId) { const me = NET.players[NET.selfId]; if (me && me.dead) return; }
+    return dpVitPrevKey.apply(this, arguments);
+  };
+  const dpVitPrevUpd = upd;
+  upd = function(dt) {
+    const me = NET.role === 'host' && NET.gameStarted && S ? NET.players[NET.selfId] : null;
+    if (!me || !me.dead) return dpVitPrevUpd(dt);
+    const names = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'Space'], saved = {};
+    names.forEach(k => { saved[k] = K[k]; K[k] = false; });
+    S.mg = null; S.seat = false; S.sit = false; S.wing = null;
+    try { return dpVitPrevUpd(dt); } finally { names.forEach(k => { K[k] = saved[k]; }); }
+  };
+  // a dead guest sends nothing and sees a spectator banner
+  const dpVitPrevSend = sendInput;
+  sendInput = function() {
+    const me = NET.players && NET.players[NET.selfId];
+    if (NET.role === 'guest' && me && me.dead) return;
+    return dpVitPrevSend.apply(this, arguments);
+  };
+  const dpVitPrevDraw = draw;
+  draw = function() {
+    const r = dpVitPrevDraw();
+    if (NET.role !== 'off' && NET.gameStarted && S && S.ph !== 'over' && S.ph !== 'boss' && S.ph !== 'cut') {
+      const me = NET.players && NET.players[NET.selfId];
+      if (me && me.dead) {
+        X.save(); X.textAlign = 'center'; X.fillStyle = 'rgba(0,0,0,.6)'; X.fillRect(240, 84, 420, 34);
+        X.fillStyle = '#ff8b7a'; X.font = 'bold 15px system-ui';
+        X.fillText(dpL('Вы погибли — наблюдайте за экипажем', 'You died — spectate the crew'), 450, 106); X.restore();
+      }
+    }
+    return r;
   };
 
 })();
