@@ -2370,7 +2370,7 @@ requestAnimationFrame(loop);
       const timeout = setTimeout(() => controller.abort(), 7000);
       let response;
       try {
-        response = awaitfetch('/https://multfinal3.vercel.app/api/turn', { method: 'GET', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json' } });
+        response = await fetch('/api/turn', { method: 'GET', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json' } });
       } finally { clearTimeout(timeout); }
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const payload = await response.json();
