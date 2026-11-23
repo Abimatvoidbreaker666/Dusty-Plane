@@ -305,7 +305,7 @@ html:not(.dp-net) #dpChatRoot{display:none!important}
       <label class="net-label" for="netNickInput">Никнейм</label>
       <input id="netNickInput" maxlength="18" autocomplete="nickname" placeholder="Игрок">
       <details class="net-priv"><summary>Приватность</summary>
-        <label class="net-check" for="netPrivIp"><input type="checkbox" id="netPrivIp"><span><b>Скрыть мой IP-адрес</b><small>Соединение идёт через TURN-релей: участники комнаты не увидят ваш IP. Нужен доступный TURN, скорость чуть ниже.</small></span></label>
+        <label class="net-check" for="netPrivIp"><input type="checkbox" id="netPrivIp" checked disabled><span><b>Скрытие IP включено для всех участников</b><small>Все участники используют TURN-релей, чтобы смешанные настройки приватности не срывали подключение. Нужен доступный TURN-сервер; возможна небольшая задержка.</small></span></label>
         <label class="net-check" for="netPrivAnon"><input type="checkbox" id="netPrivAnon"><span><b>Анонимный ник</b><small>В комнате вас увидят как «Игрок-1234», а не по вашему нику.</small></span></label>
       </details>
       <div class="net-tabs" role="tablist">
@@ -2397,7 +2397,16 @@ requestAnimationFrame(loop);
     }
   }
   function peerOptionsWithIce(iceServers) {
-    return { ...PEER_OPTIONS, config: { ...PEER_OPTIONS.config, iceServers: iceServers || BASE_ICE_SERVERS, ...(window.DustyPlaneNetwork && window.DustyPlaneNetwork.privIp ? { iceTransportPolicy: 'relay' } : {}) } };
+    // Use the same relay-only ICE policy for every participant. This avoids
+    // negotiation failures when only one side previously enabled IP privacy.
+    return {
+      ...PEER_OPTIONS,
+      config: {
+        ...PEER_OPTIONS.config,
+        iceServers: iceServers || BASE_ICE_SERVERS,
+        iceTransportPolicy: 'relay'
+      }
+    };
   }
   const NET = window.DustyPlaneNetwork = {
     role: 'off', peer: null, hostConn: null, connections: new Map(),
@@ -4936,15 +4945,17 @@ requestAnimationFrame(loop);
   clearNetworkState = function() { dpSpecPrevClear(); NET.spec = { id: '', hideDead: NET.spec ? NET.spec.hideDead : false }; NET.lastSeen = {}; const el = byId('dpSpec'); if (el) el.hidden = true; };
 
   // ---------- privacy options ----------
-  NET.privIp = false; NET.privAnon = false; NET.anon = '';
-  try { const pv = JSON.parse(localStorage.getItem('dusty_net_priv') || '{}'); NET.privIp = !!pv.ip; NET.privAnon = !!pv.anon; } catch (_) {}
+  // TURN relay is mandatory for every participant so mixed per-device settings
+  // cannot create incompatible ICE negotiation modes.
+  NET.privIp = true; NET.privAnon = false; NET.anon = '';
+  try { const pv = JSON.parse(localStorage.getItem('dusty_net_priv') || '{}'); NET.privAnon = !!pv.anon; } catch (_) {}
   const dpIpBox = byId('netPrivIp'), dpAnBox = byId('netPrivAnon');
-  dpIpBox.checked = NET.privIp; dpAnBox.checked = NET.privAnon;
+  dpIpBox.checked = true; dpIpBox.disabled = true; dpAnBox.checked = NET.privAnon;
   const dpSavePriv = () => {
-    NET.privIp = dpIpBox.checked; NET.privAnon = dpAnBox.checked; if (!NET.privAnon) NET.anon = '';
-    try { localStorage.setItem('dusty_net_priv', JSON.stringify({ ip: NET.privIp, anon: NET.privAnon })); } catch (_) {}
+    NET.privIp = true; NET.privAnon = dpAnBox.checked; if (!NET.privAnon) NET.anon = '';
+    try { localStorage.setItem('dusty_net_priv', JSON.stringify({ ip: true, anon: NET.privAnon })); } catch (_) {}
   };
-  dpIpBox.addEventListener('change', dpSavePriv); dpAnBox.addEventListener('change', dpSavePriv);
+  dpAnBox.addEventListener('change', dpSavePriv);
   const dpPrivPrevNick = currentNick;
   currentNick = function() {
     if (NET.privAnon) { if (!NET.anon) NET.anon = 'Игрок-' + (1000 + Math.floor(Math.random() * 9000)); return NET.anon; }
@@ -4953,7 +4964,7 @@ requestAnimationFrame(loop);
   const dpPrivPrevIce = resolveIceServers;
   resolveIceServers = async function() {
     const r = await dpPrivPrevIce.apply(this, arguments);
-    if (NET.privIp && /недоступен/i.test(String(r && r.source || ''))) throw new Error(dpL('Режим «Скрыть IP» требует TURN-сервер, а он сейчас недоступен. Отключите режим или повторите позже.', '"Hide my IP" needs a TURN server, which is unavailable right now. Turn it off or try later.'));
+    if (NET.privIp && /недоступен/i.test(String(r && r.source || ''))) throw new Error(dpL('Для сетевой игры необходим доступный TURN-сервер. Проверьте подключение и попробуйте снова.', 'A TURN server is required for multiplayer. Check your connection and try again.'));
     return r;
   };
   const dpPrivPrevClear = clearNetworkState;
