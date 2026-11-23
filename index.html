@@ -217,6 +217,28 @@ html:not(.dp-net) #dpChatRoot{display:none!important}
 .dpr-legend i{width:10px;height:10px;border-radius:3px;background:var(--pc)}
 .dpr-help-empty{font-size:.72rem;opacity:.6;margin-top:6px}
 
+/* system chat line + spectator panel */
+.dp-chat-system{align-self:center;max-width:95%;padding:5px 11px;border-radius:999px;background:rgba(255,179,71,.12);border:1px solid rgba(255,179,71,.3);color:#ffd08a;font-size:12px;font-weight:700;text-align:center;overflow-wrap:anywhere}
+#dpSpec{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147482000;width:min(580px,calc(100vw - 16px));box-sizing:border-box;padding:10px 12px;border-radius:14px;background:rgba(10,14,26,.93);border:1px solid rgba(255,179,71,.35);color:#f4ecdc;font-family:system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#dpSpec[hidden]{display:none}
+.dps-main{display:flex;align-items:center;gap:10px}
+#dpSpec button{flex:0 0 38px;width:38px;height:38px;margin:0;padding:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22);font-size:16px;cursor:pointer}
+#dpSpec button:hover:not(:disabled){background:rgba(255,255,255,.18)}#dpSpec button:disabled{opacity:.4;cursor:default}
+.dps-card{flex:1;min-width:0}
+.dps-top{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem}
+.dps-dot{flex:0 0 11px;height:11px;border-radius:50%;background:var(--pc,#ffb347);box-shadow:0 0 8px var(--pc,#ffb347)}
+.dps-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dps-badge{margin-left:auto;padding:2px 8px;border-radius:999px;font-size:.62rem;letter-spacing:.06em;background:rgba(123,220,181,.18);color:#7bdcb5;border:1px solid rgba(123,220,181,.4)}
+.dps-badge.dead{background:rgba(255,139,122,.18);color:#ff8b7a;border-color:rgba(255,139,122,.45)}
+.dps-hp{height:8px;border-radius:5px;background:rgba(255,255,255,.12);margin:7px 0 4px;overflow:hidden}
+.dps-hp i{display:block;height:100%;background:#4ade80;transition:width .2s}
+.dps-stats{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:.72rem;opacity:.85}
+.dps-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:.72rem}
+.dps-foot label{display:flex;align-items:center;gap:6px;cursor:pointer}
+#dpSpec input[type=checkbox]{width:16px;height:16px;margin:0;accent-color:#ffb347}
+@media(max-height:480px){#dpSpec{padding:7px 10px;bottom:6px}.dps-hp{margin:4px 0 3px}.dps-foot{margin-top:5px}}
+
+.net-priv{margin:8px 0}.net-priv summary{cursor:pointer;font-size:.8rem;opacity:.85}
 </style><style id="dpChatStyles">
 
 #dpChatRoot{position:fixed!important;right:14px;top:calc(14px + env(safe-area-inset-top,0px));z-index:2147483647!important;font-family:system-ui,sans-serif;color:#f7f4ee;pointer-events:none}
@@ -282,6 +304,10 @@ html:not(.dp-net) #dpChatRoot{display:none!important}
       <p class="net-desc">Войди в открытую комнату, подключись по коду или настрой свой рейс и создай комнату.</p>
       <label class="net-label" for="netNickInput">Никнейм</label>
       <input id="netNickInput" maxlength="18" autocomplete="nickname" placeholder="Игрок">
+      <details class="net-priv"><summary>Приватность</summary>
+        <label class="net-check" for="netPrivIp"><input type="checkbox" id="netPrivIp"><span><b>Скрыть мой IP-адрес</b><small>Соединение идёт через TURN-релей: участники комнаты не увидят ваш IP. Нужен доступный TURN, скорость чуть ниже.</small></span></label>
+        <label class="net-check" for="netPrivAnon"><input type="checkbox" id="netPrivAnon"><span><b>Анонимный ник</b><small>В комнате вас увидят как «Игрок-1234», а не по вашему нику.</small></span></label>
+      </details>
       <div class="net-tabs" role="tablist">
         <button id="netTabJoin" class="on" type="button" role="tab">Войти в комнату</button>
         <button id="netTabCreate" type="button" role="tab">Создать комнату</button>
@@ -977,7 +1003,7 @@ let MODE='free',MA=null,MF=null;
 function renderMode(){
  document.querySelectorAll('.md').forEach(b=>{const st=b.dataset.m==='st';b.classList.toggle('on',b.dataset.m===MODE);b.textContent=st?(SV.sd?'История (пройдена)':'История'):b.dataset.m==='inf'?'Бесконечный'+(SV.best?' · рекорд '+SV.best+' км':''):b.dataset.m==='sto'?'Экстренная ситуация':'Свободный полёт';b.classList.toggle('lk',st&&!!SV.sd)});
  document.getElementById('rst').style.display=SV.sd?'':'none';
- document.getElementById('stx').textContent=MODE==='st'?'История: 10000 км (Очень лёгкий — 5000 км) на базовых запчастях (без улучшений), диспетчеры FMRA, задания и босс-файт.':MODE==='inf'?'Бесконечный: конца нет, поломки становятся всё чаще. Каждые 1000 км — бонус FC. Побейте свой рекорд!':MODE==='sto'?'Экстренная ситуация: 3000 км сквозь шторм. Серое небо, дождь, торнадо, обледенение, шквалы. Птиц и FMRA нет — нужно переживать атаки бури.':'';
+ document.getElementById('stx').textContent=MODE==='st'?'История: 9 глав. Перелёты на базовых запчастях (без улучшений), выживание в лесу, сборка самолёта, поиск координат и стелс-миссия.':MODE==='inf'?'Бесконечный: конца нет, поломки становятся всё чаще. Каждые 1000 км — бонус FC. Побейте свой рекорд!':MODE==='sto'?'Экстренная ситуация: 3000 км сквозь шторм. Серое небо, дождь, торнадо, обледенение, шквалы. Птиц и FMRA нет — нужно переживать атаки бури.':'';
 }
 document.querySelectorAll('.md').forEach(b=>b.onclick=()=>{if(b.dataset.m==='st'&&SV.sd)return;MODE=b.dataset.m;renderMode()});
 document.getElementById('rst').onclick=()=>{SV.sd=false;SV.ch=0;CHS=1;sv();renderMode()};
@@ -1016,9 +1042,9 @@ function drawDlg(){
  if((S.cls==='str'||UL('tl')===2)&&S.inv.length&&S.ph==='flight'){X.textAlign='left';X.font='11px system-ui';X.fillStyle='#fff';X.fillText('Инвентарь (Q): '+S.inv.map(i=>i===S.item?'['+TN[i]+']':TN[i]).join(' · '),12,60);X.textAlign='center'}
  const d=S.dlg;if(!d)return;
  const sp=d.l[d.i][0],tx=d.l[d.i][1];d.c=Math.min(tx.length+1,d.c+1.2);
- const col={FMRA:'#ff5a4a','Вы':'#ffb347','Моть':'#6df0a8','Лиса':'#c58bff','Горин':'#ff8a3c'}[sp]||'#ffb347';
+ const col={FMRA:'#ff5a4a','Вы':'#ffb347','Моть':'#6df0a8','Лиса':'#c58bff','Горин':'#ff8a3c','Сэм':'#6ec6ff','Охранник':'#ff8a8a','Сотрудник':'#c8d4e8'}[sp]||'#ffb347';
  X.fillStyle='rgba(8,10,20,.9)';X.fillRect(40,300,820,110);X.strokeStyle=col;X.lineWidth=2;X.strokeRect(40,300,820,110);
- X.textAlign='left';X.font='bold 14px system-ui';X.fillStyle=col;X.fillText(({FMRA:'Диспетчер FMRA','Моть':'Старик Моть','Лиса':'Лиса (союзник)','Горин':'Директор Горин'})[sp]||'Вы',56,324);
+ X.textAlign='left';X.font='bold 14px system-ui';X.fillStyle=col;X.fillText(({FMRA:'Диспетчер FMRA','Моть':'Старик Моть','Лиса':'Лиса (союзник)','Горин':'Директор Горин','Сэм':'Сэм','Охранник':'Охранник','Сотрудник':'Сотрудник'})[sp]||'Вы',56,324);
  X.font='15px system-ui';X.fillStyle='#fff';
  let line='',y=348;for(const w of tx.slice(0,Math.floor(d.c)).split(' ')){if(X.measureText(line+w).width>780){X.fillText(line,56,y);y+=22;line=''}line+=w+' '}X.fillText(line,56,y);
  X.font='11px system-ui';X.fillStyle='#aaa';X.textAlign='right';X.fillText('Space / E / тап — дальше',850,402);X.textAlign='center';
@@ -1335,36 +1361,11 @@ function stormX(){
 }
 const CH=[
 {n:'Побег',km:10000,rw:1000,sm:'Угнать «Горе-1», уйти от FMRA, пережить босс-файт и крушение.',sc:SCR},
-{n:'Из обломков',km:1500,rw:600,sm:'Моть собрал самолёт из обломков: один двигатель мёртв, обшивка в дырах.',
- setup:()=>{S.en[0]=false;for(let i=0;i<4;i++)addProb('hole',rh(),rw(),1);S.lamps[2]=false},
- sc:[[0,()=>say([['Моть','Живой! Три недели я клёпал эту птичку из обломков твоего «Горе-1». Один движок мёртвый, зато второй рычит как зверь.'],['Вы','Спасибо, Моть. Ты спас мне жизнь. А чёрный ящик цел?'],['Моть','Цел. Теперь в порт Сивер, там ждёт Лиса. Держи курс и не ложись на один борт.']])],
- [400,()=>say([['Моть','Слышишь, посвистывает? Это дыры в обшивке. Заклей всё, пока кислород не вышел.']],()=>task('закройте все дыры изолентой',50,()=>!S.probs.some(p=>p.t==='hole'),18))],
- [900,()=>say([['Вы','С одним двигателем топлива уходит больше. Нужно беречь канистры.'],['Моть','Держи газ пониже — и дотянешь до Сивера.']],()=>task('поставьте газ «Низкий» (1 у штурвала)',30,()=>S.th===0,12))]],
- end:[['Моть','Садись мягче: крыло держится на честном слове. Лиса уже на полосе.'],['Вы','Сивер... Здесь начинается настоящая дорога.']]},
-{n:'Чужое небо',km:2500,rw:800,sm:'Контрабандный коридор с помощью союзницы-диспетчера. Радиомолчание.',
- sc:[[0,()=>say([['Лиса','Пыль, это Лиса. Я диспетчер FMRA — и да, работаю на тебя. Они ловят каждый сигнал.'],['Вы','Ты рискуешь головой.'],['Лиса','Знаю. Мне есть за что ненавидеть «Горе». Лети по моим точкам.']])],
- [600,()=>say([['Лиса','Радарная проверка! Выключи радио — рация светится на их экранах.']],()=>{S.radio=true;task('выключите радио (R у ящика в хвосте)',30,()=>!S.radio,14)})],
- [1300,()=>say([['FMRA','Борт без позывного, вы нарушили границу! Перехват.']],()=>fmStart(true))],
- [1900,()=>say([['Лиса','Они идут по твоему следу. Ещё один заход, держись!']],()=>fmStart(true))]],
- end:[['Лиса','Ты прошёл границу. Следующий рейс — груз для людей, которые не могут ждать.'],['Вы','Давай. Я готов.']]},
-{n:'Ночной груз',km:2000,rw:900,sm:'Лекарства в трюме: держать температуру 20–24°, топливо уходит быстрее.',
- setup:()=>{S.fxm=1.15},
- sc:[[0,()=>say([['Лиса','В трюме лекарства для города за горами. Им нужна температура от 20 до 24, иначе всё пропадёт.'],['Вы','А я-то думал, что вожу только неприятности.'],['Лиса','Ты возишь надежду, Пыль.']])],
- [500,()=>say([['Лиса','Проверь термостат на стене: груз должен дышать ровно.']],()=>task('держите температуру 20–24° в течение 20 с',70,()=>S.hold>=20,22))],
- [1200,()=>say([['Лиса','Над хребтом трясёт! Груз важнее всего.']],()=>{S.ev={k:'tb',t:6,ph:'warn'}})],
- [1700,()=>say([['Вы','Хребет позади. Груз дышит ровно.']])]],
- end:[['Лиса','Город принял груз. Мне сообщили: у «Горе» новый приказ — закрыть небо над нами.'],['Вы','Значит, пойдём через шторм.']]},
-{n:'Шторм',km:2500,rw:1000,sm:'Через бурю, куда не сунутся пилоты. Торнадо, ливни, лёд.',
- sc:[[0,()=>say([['Лиса','Метеослужба: фронт в сто километров. «Горе» перекрыли коридор, пилоты туда не сунутся.'],['Вы','Значит, и FMRA не сунется. Буря — мой союзник.'],['Лиса','Буря не союзник никому. Береги самолёт.']])],
- [1200,()=>say([['Лиса','Центр фронта. Держись крепче — тут рождаются торнадо.']],()=>{S.ev={k:'tn',t:5,ph:'warn'}})],
- [2000,()=>say([['Вы','Просвет! Небо светлеет.']])]],
- end:[['Вы','Мы прошли сквозь бурю.'],['Лиса','Дальше зона радиоподавления «Горе». Придётся лететь вслепую.']]},
-{n:'Мёртвая зона',km:3000,rw:1100,sm:'РЭБ-зона: питание отключается каждые 45 секунд.',
- sc:[[0,()=>say([['Лиса','Над нами РЭБ-зона «Горе». Электроника будет отключаться. Ты знаешь, где щиток.'],['Вы','Лампы, щиток, отвёртка. Классика.']])],
- [800,()=>say([['Лиса','Сигнал пропал. Держись на ручном управлении.']],()=>EVS[19]())],
- [1700,()=>say([['FMRA','Мы видим тебя, Пыль. Мы всегда видели.']],()=>fmStart(true))],
- [2400,()=>say([['Лиса','Выходишь из зоны. Ещё немного!']])]],
- end:[['Лиса','...Пыль, я должна тебе кое-что сказать. Не по радио.'],['Вы','Что-то случилось?']]},
+{n:'Выживание в лесу',km:0,rw:1200,adv:'forest',sm:'Лес, обломки двух самолётов. Продержитесь 3 дня: еда, вода, огонь, укрытие и ночные звери.',sc:[]},
+{n:'Сборка',km:0,rw:1500,adv:'build',sm:'Дом Сэма: отдых, странный сон и сборка нового самолёта в гараже (около часа).',sc:[]},
+{n:'Побег',km:0,rw:1300,adv:'escape',sm:'Определите координаты полосы: радио, шифр, карта, приборы и автопилот.',sc:[]},
+{n:'Кража',km:0,rw:1800,adv:'heist',sm:'Стелс-миссия в штабе FMRA: форма агента, серверная и пропуск на Boeing.',sc:[]},
+{n:'Встреча',km:0,rw:600,adv:'meet',sm:'Глава будет доработана в одном из следующих обновлений.',sc:[]},
 {n:'Предатель',km:3500,rw:1300,sm:'Лиса сдала маршрут. Серия быстрых перехватов FMRA.',
  sc:[[0,()=>say([['Лиса','Я больше не могу. Они взяли мою семью. Мне пришлось сказать им твой маршрут.'],['Вы','Так это была ты...'],['Лиса','Прости. Лети, сколько сможешь — я задержу их, как смогу.']])],
  [800,()=>say([['FMRA','Лиса сдала вас. Борт, вы окружены!']],()=>fmStart(true))],
@@ -1398,7 +1399,7 @@ SV.ch=SV.ch||0;
 function renderChs(){
  const el=document.getElementById('chs');el.innerHTML='';if(MODE!=='st')return;CHS=Math.max(1,Math.min(CHS,SV.ch+1,9));
  CH.forEach((c,i)=>{const n=i+1,lock=n>SV.ch+1,done=n<=SV.ch,d=document.createElement('div');d.className='cc'+(n===CHS?' sel':'')+(lock?' lk':'');
-  d.innerHTML='<b>Глава '+n+'. '+c.n+'</b><small>'+(lock?'Закрыто':c.sm)+'</small><i>'+(done?'Пройдена ✓':lock?'🔒':c.km+' км · '+c.rw+' FC')+'</i>';
+  d.innerHTML='<b>Глава '+n+'. '+c.n+'</b><small>'+(lock?'Закрыто':c.sm)+'</small><i>'+(done?'Пройдена ✓':lock?'🔒':(c.adv?'Сюжет':c.km+' км')+' · '+c.rw+' FC')+'</i>';
   d.onclick=()=>{if(!lock){CHS=n;renderChs()}};el.appendChild(d)});
 }
 const _rm=renderMode;renderMode=function(){_rm();renderChs()};
@@ -2369,7 +2370,7 @@ requestAnimationFrame(loop);
       const timeout = setTimeout(() => controller.abort(), 7000);
       let response;
       try {
-        response = await fetch('/api/turn', { method: 'GET', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json' } });
+        response = awaitfetch('/https://multfinal3.vercel.app/api/turn', { method: 'GET', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json' } });
       } finally { clearTimeout(timeout); }
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const payload = await response.json();
@@ -2396,7 +2397,7 @@ requestAnimationFrame(loop);
     }
   }
   function peerOptionsWithIce(iceServers) {
-    return { ...PEER_OPTIONS, config: { ...PEER_OPTIONS.config, iceServers: iceServers || BASE_ICE_SERVERS } };
+    return { ...PEER_OPTIONS, config: { ...PEER_OPTIONS.config, iceServers: iceServers || BASE_ICE_SERVERS, ...(window.DustyPlaneNetwork && window.DustyPlaneNetwork.privIp ? { iceTransportPolicy: 'relay' } : {}) } };
   }
   const NET = window.DustyPlaneNetwork = {
     role: 'off', peer: null, hostConn: null, connections: new Map(),
@@ -2454,7 +2455,7 @@ requestAnimationFrame(loop);
     // Open rooms use a small reserved range (900001-900040) so that "find a random room" can probe it;
     // closed rooms use ordinary codes that can never be discovered.
     NET._try = (NET._try || 0) + 1;
-    if (NET.isPublic && NET._try <= 6) return String(900001 + Math.floor(Math.random() * 40));
+    if (NET.isPublic && NET._try <= 6) return String(900001 + Math.floor(Math.random() * 20));
     NET.isPublic = false;
     return String(Math.floor(100000 + Math.random() * 800000));
   }
@@ -3014,12 +3015,6 @@ requestAnimationFrame(loop);
       byId('netHud').style.display = 'block';
     }
   };
-  const originalRenderMode = renderMode;
-  renderMode = function() {
-    originalRenderMode();
-    const story = document.querySelector('.md[data-m="st"]');
-    if (story) { story.textContent = tr('Будет обновлено чуть позже'); story.disabled = true; story.classList.add('lk'); }
-  };
   try { renderMode(); } catch (_) {}
 
   // Guest keyboard input is intercepted before the local single-player handlers.
@@ -3125,7 +3120,8 @@ requestAnimationFrame(loop);
       from: String(raw.from || ''),
       name: cleanNick(raw.name || 'Игрок'),
       text,
-      time: Math.max(0, Number(raw.time) || Date.now())
+      time: Math.max(0, Number(raw.time) || Date.now()),
+      system: raw.system === true && String(raw.from || '') === 'system'
     };
   }
   function dpRenderChat() {
@@ -3151,6 +3147,7 @@ requestAnimationFrame(loop);
       list.appendChild(empty);
     } else {
       for (const msg of NET.chatHistory) {
+        if (msg.system) { const sys = document.createElement('div'); sys.className = 'dp-chat-system'; sys.textContent = 'SYSTEM: ' + msg.text; list.appendChild(sys); continue; }
         const item = document.createElement('article');
         item.className = 'dp-chat-message' + (msg.from && msg.from === NET.selfId ? ' own' : '');
         const meta = document.createElement('div'); meta.className = 'dp-chat-meta';
@@ -3500,7 +3497,7 @@ requestAnimationFrame(loop);
         keys:host ? {} : {...(p.keys || {})},
         msg:host && S ? (S.msg || '') : (p.msg || ''),
         msgT:host && S ? (Number(S.msgT) || 0) : (Number(p.msgT) || 0),
-        hp:host && S ? S.hp : p.hp, hpm:host && S ? S.hpm : p.hpm, dead:!!p.dead, cause:p.cause || ''
+        hp:host && S ? S.hp : p.hp, hpm:host && S ? S.hpm : p.hpm, dead:!!p.dead, cause:p.cause || '', hs:dpLiveStat(p.id)
       };
       return activity;
     });
@@ -4009,7 +4006,7 @@ requestAnimationFrame(loop);
   // Room creation form, random open room, chat mute, chat gating, minigame reset
   // ---------------------------------------------------------------------------
   NET.maxPlayers = 5; NET.isPublic = false; NET.muteAll = false; NET.mutedIds = new Set();
-  const DP_PUB_BASE = 900001, DP_PUB_COUNT = 40;
+  const DP_PUB_BASE = 900001, DP_PUB_COUNT = 20;
   function dpIsMuted(id) { return !!NET.muteAll || !!(NET.mutedIds && NET.mutedIds.has(id)); }
   function dpResetActivities(map) {
     for (const p of Object.values(map || {})) {
@@ -4155,6 +4152,30 @@ requestAnimationFrame(loop);
 
   // --- random open room: probe the reserved public codes ---
   let dpSearching = false;
+  // Probe a few public codes at a time. A code with no peer answers "peer-unavailable" from the signalling
+  // server within ~1 s; a room answers over a data channel (can take several seconds on mobile networks).
+  function dpProbeBatch(probe, codes) {
+    return new Promise(resolve => {
+      const state = {}, conns = {}; let finished = false, timer = null;
+      const re = new RegExp(ROOM_PREFIX + '(\\d{6})');
+      const finish = () => {
+        if (finished) return; finished = true; clearTimeout(timer);
+        try { probe.removeListener('error', onErr); } catch (_) {}
+        Object.values(conns).forEach(c => { try { c.close(); } catch (_) {} });
+        resolve(state);
+      };
+      const check = () => { if (Object.values(state).some(s => s.open) || codes.every(c => state[c])) finish(); };
+      const onErr = err => { const m = re.exec(String(err && err.message || '')); if (m && codes.includes(m[1]) && !state[m[1]]) { state[m[1]] = { none: true }; check(); } };
+      probe.on('error', onErr);
+      timer = setTimeout(() => { codes.forEach(c => { if (!state[c]) state[c] = { silent: true }; }); finish(); }, 9000);
+      codes.forEach(code => {
+        const conn = probe.connect(ROOM_PREFIX + code, { reliable: true, serialization: 'json' }); conns[code] = conn;
+        conn.on('open', () => safeSend(conn, { t: 'probe' }));
+        conn.on('data', d => { if (d && d.t === 'info' && !state[code]) { state[code] = { open: !!d.open }; check(); } });
+        conn.on('error', () => { if (!state[code]) { state[code] = { none: true }; check(); } });
+      });
+    });
+  }
   async function dpFindRandom() {
     if (dpSearching || NET.busy || NET.role !== 'off') return;
     dpSearching = true;
@@ -4162,29 +4183,36 @@ requestAnimationFrame(loop);
     let probe = null;
     try {
       NET.nick = currentNick();
-      setHomeStatus(dpL('Ищем открытые комнаты…', 'Looking for open rooms…'));
+      setHomeStatus(dpL('Подключаемся к серверу…', 'Connecting to the server…'));
       await ensurePeerJS();
       const ice = await resolveIceServers();
       probe = new Peer(peerOptionsWithIce(ice.iceServers));
       await waitForPeerOpen(probe, 12000);
       const codes = Array.from({ length: DP_PUB_COUNT }, (_, i) => String(DP_PUB_BASE + i));
-      const found = [], settled = new Set();
-      await new Promise(resolve => {
-        const timer = setTimeout(resolve, 4500);
-        const settle = code => { settled.add(code); if (settled.size >= codes.length) { clearTimeout(timer); resolve(); } };
-        probe.on('error', err => { const m = /dustyplane-(\d{6})/.exec(String(err && err.message || '')); if (m) settle(m[1]); });
-        for (const code of codes) {
-          const conn = probe.connect(ROOM_PREFIX + code, { reliable: true, serialization: 'json' });
-          conn.on('open', () => safeSend(conn, { t: 'probe' }));
-          conn.on('data', d => { if (d && d.t === 'info') { if (d.open) found.push(code); settle(code); try { conn.close(); } catch (_) {} } });
-          conn.on('error', () => settle(code));
+      for (let i = codes.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [codes[i], codes[j]] = [codes[j], codes[i]]; }
+      const open = [], silent = []; let existing = 0;
+      for (let i = 0; i < codes.length && !open.length; i += 5) {
+        const batch = codes.slice(i, i + 5);
+        setHomeStatus(dpL('Ищем открытые комнаты… ({n}/{total})', 'Looking for open rooms… ({n}/{total})'), { n: Math.min(i + batch.length, codes.length), total: codes.length });
+        const res = await dpProbeBatch(probe, batch);
+        for (const c of batch) {
+          const s = res[c] || { none: true };
+          if (s.none) continue;
+          existing++;
+          if (s.open) open.push(c); else if (s.silent) silent.push(c);
         }
-      });
+      }
       try { probe.destroy(); } catch (_) {} probe = null;
-      if (!found.length) { setHomeStatus(dpL('Открытых комнат не найдено. Создайте свою или попробуйте ещё раз.', 'No open rooms found. Create your own or try again.')); return; }
-      const code = found[Math.floor(Math.random() * found.length)];
-      byId('netCodeInput').value = code;
-      setHomeStatus(dpL('Нашли комнату {code}. Подключаемся…', 'Found room {code}. Joining…'), { code });
+      const pick = open.length ? open[Math.floor(Math.random() * open.length)] : silent.length ? silent[Math.floor(Math.random() * silent.length)] : null;
+      if (!pick) {
+        setHomeStatus(existing
+          ? dpL('Комнаты есть, но сейчас в них нельзя войти (рейс идёт или нет мест).', 'Rooms exist, but none can be joined right now (flight in progress or full).')
+          : dpL('Открытых комнат не найдено. Создайте свою или попробуйте ещё раз.', 'No open rooms found. Create your own or try again.'));
+        return;
+      }
+      byId('netCodeInput').value = pick;
+      setHomeStatus(open.length ? dpL('Нашли комнату {code}. Подключаемся…', 'Found room {code}. Joining…')
+                                : dpL('Комната {code} найдена, но не ответила. Пробуем войти напрямую…', 'Room {code} found but did not answer. Trying to join directly…'), { code: pick });
       dpSearching = false; btn.disabled = false;
       await joinRoom();
     } catch (err) {
@@ -4261,8 +4289,10 @@ requestAnimationFrame(loop);
   function dpAfterLocalMg(kind, escaped) {
     const me = NET.players[NET.selfId];
     if (!NET.lmg || !me || me.mg) return;
+    const lm = NET.lmg.m;
     NET.mgDone = { key: NET.lmg.key, at: performance.now() }; NET.lmg = null;
-    if (!escaped && DP_MG_TIMING.includes(kind)) safeSend(NET.hostConn, { t: 'mgdone', k: kind });
+    if (kind === 'fu') safeSend(NET.hostConn, { t: 'mgdone', k: kind, fuel: Math.round((lm._pour || 0) * 10) / 10, spill: lm._spill || 0, esc: !!escaped });
+    else if (!escaped && DP_MG_TIMING.includes(kind)) safeSend(NET.hostConn, { t: 'mgdone', k: kind });
   }
   function dpLocalMgTick(dt) {
     const me = NET.players && NET.players[NET.selfId];
@@ -4273,7 +4303,13 @@ requestAnimationFrame(loop);
     try {
       dpWithPlayerContext(me, () => {
         const m = S.mg; if (!m) return;
-        if (m.k === 'fu') fuUpd(m, dt);
+        if (m.k === 'fu') {
+          const f0 = S.fuel, tm0 = S.tm, pc = S.probs.filter(q => q.t === 'puddle').length;
+          S.fuel = m._pour || 0; S.tm = 1e9; // fuUpd adds the poured amount to S.fuel: collect it
+          fuUpd(m, dt);
+          m._pour = S.fuel; S.fuel = f0; S.tm = tm0;
+          m._spill = (m._spill || 0) + Math.max(0, S.probs.filter(q => q.t === 'puddle').length - pc);
+        }
         if (m.k === 'tp') tpUpd(m, dt);
         if (m.k === 'tm') { m.pos += m.dir * m.sp * dt; if (m.pos > 1) { m.pos = 1; m.dir = -1; } if (m.pos < 0) { m.pos = 0; m.dir = 1; } }
         if (m.k === 'wd') {
@@ -4329,11 +4365,17 @@ requestAnimationFrame(loop);
       if (data.t !== 'mgdone') return;
       const p = NET.players[conn.peer];
       if (!p || !p.mg || !NET.gameStarted || !S || S.ph === 'over' || p.mg.k !== data.k || !DP_MG_TIMING.includes(p.mg.k)) return;
-      if (Date.now() - (p._mgAt || 0) < 200) return;
+      if (!data.esc && Date.now() - (p._mgAt || 0) < 200) return;
       dpRebindProblem(p);
       dpWithPlayerContext(p, () => {
         if (!S.mg) return;
-        if (S.mg.k === 'fu') { S.mg = null; dropItem(); S.fc += 2; toast('Канистра залита'); }
+        if (S.mg.k === 'fu') {
+          const pour = Math.max(0, Math.min((Number(S.mg.max) || 40) + 1, Number(data.fuel) || 0));
+          S.fuel = Math.min(S.tm, S.fuel + pour);
+          for (let i = 0; i < Math.min(4, Number(data.spill) || 0); i++) addProb('puddle', S.px, 0, 1);
+          S.mg = null; dropItem();
+          if (!data.esc) { S.fc += 2; toast('Канистра залита'); }
+        }
         else done();
       });
     });
@@ -4759,7 +4801,802 @@ requestAnimationFrame(loop);
     return r;
   };
 
+  // ---------- leaving players: instant removal + SYSTEM message ----------
+  NET.lastSeen = {};
+  function dpSystemMessage(text) {
+    if (NET.role !== 'host') return;
+    const message = { id: 'sys-' + Date.now() + '-' + Math.random().toString(36).slice(2), from: 'system', name: 'SYSTEM', text, time: Date.now(), system: true };
+    if (dpAddChatMessage(message, true)) broadcast({ t: 'chat-message', message });
+  }
+  const dpLeavePrevRemove = removeGuest;
+  removeGuest = function(id) {
+    const p = NET.role === 'host' && NET.players ? NET.players[id] : null;
+    const name = p && p.name;
+    dpLeavePrevRemove(id);
+    if (NET.lastSeen) delete NET.lastSeen[id];
+    if (NET.pings) delete NET.pings[id];
+    if (p && name) dpSystemMessage(name + ' ' + dpL('покинул игру.', 'left the game.'));
+  };
+  const dpLeavePrevAccept = acceptGuest;
+  acceptGuest = function(conn) {
+    dpLeavePrevAccept(conn);
+    NET.lastSeen[conn.peer] = Date.now();
+    conn.on('data', () => { NET.lastSeen[conn.peer] = Date.now(); });
+  };
+  // a guest whose tab silently died (no close event) is dropped after 25 s without any message
+  window.setInterval(() => {
+    if (NET.role !== 'host') return;
+    const now = Date.now();
+    for (const id of Object.keys(NET.players || {})) {
+      const pl = NET.players[id];
+      if (!pl || pl.host) continue;
+      if (now - (NET.lastSeen[id] || now) > 25000) removeGuest(id);
+    }
+  }, 5000);
+  const dpPageLeave = event => {
+    if (event && event.persisted) return;
+    try {
+      if (NET.role === 'guest' && NET.hostConn) { safeSend(NET.hostConn, { t: 'leave' }); }
+      else if (NET.role === 'host') { broadcast({ t: 'host-left' }); }
+      if (NET.peer) NET.peer.destroy();
+    } catch (_) {}
+  };
+  window.addEventListener('pagehide', dpPageLeave);
+  window.addEventListener('beforeunload', dpPageLeave);
+
+  // ---------- spectator mode for dead players ----------
+  NET.spec = { id: '', hideDead: false };
+  function dpLiveStat(id) {
+    try {
+      let total = 0, mine = 0;
+      for (const k of Object.keys(NET.players || {})) {
+        const s = NET.stats[k], pts = s ? s.repairs + 2 * s.dodgeOk + 2 * s.engOff : 0;
+        total += pts; if (k === id) mine = pts;
+      }
+      const s = NET.stats[id] || { repairs: 0, dodgeOk: 0, engOff: 0 };
+      return { help: total > 0 ? Math.round(mine * 1000 / total) / 10 : null, rep: s.repairs, dod: s.dodgeOk, eng: s.engOff, fc: Math.floor((NET.fcOwn[id] || 0) * fcm()) };
+    } catch (_) { return null; }
+  }
+  function dpSpecActive() {
+    const me = NET.players && NET.players[NET.selfId];
+    return NET.role !== 'off' && NET.gameStarted && !!S && S.ph !== 'over' && !!me && !!me.dead;
+  }
+  function dpSpecCandidates() { return playerList().filter(p => p.id !== NET.selfId && !(NET.spec.hideDead && p.dead)); }
+  function dpSpecTarget() { const c = dpSpecCandidates(); return c.find(p => p.id === NET.spec.id) || c[0] || null; }
+  function dpSpecStep(dir) {
+    const c = dpSpecCandidates(); if (!c.length) return;
+    let i = c.findIndex(p => p.id === NET.spec.id);
+    i = i < 0 ? 0 : (i + dir + c.length) % c.length;
+    NET.spec.id = c[i].id; dpSpecRender();
+  }
+  function dpSpecEnsure() {
+    if (byId('dpSpec')) return;
+    const el = document.createElement('div'); el.id = 'dpSpec'; el.hidden = true;
+    el.innerHTML = '<div class="dps-main"><button id="dpSpecPrev" type="button" aria-label="prev">◀</button><div class="dps-card" id="dpSpecCard"></div><button id="dpSpecNext" type="button" aria-label="next">▶</button></div>' +
+      '<div class="dps-foot"><span id="dpSpecCount"></span><label for="dpSpecHide"><input type="checkbox" id="dpSpecHide"><span id="dpSpecHideLbl"></span></label></div>';
+    document.body.appendChild(el);
+    byId('dpSpecPrev').addEventListener('click', () => dpSpecStep(-1));
+    byId('dpSpecNext').addEventListener('click', () => dpSpecStep(1));
+    byId('dpSpecHide').addEventListener('change', e => { NET.spec.hideDead = e.target.checked; dpSpecRender(); });
+  }
+  function dpSpecRender() {
+    dpSpecEnsure();
+    const el = byId('dpSpec'), on = dpSpecActive();
+    el.hidden = !on; if (!on) return;
+    byId('dpSpecHideLbl').textContent = dpL('Не показывать умерших игроков', 'Hide dead players');
+    byId('dpSpecHide').checked = NET.spec.hideDead;
+    const c = dpSpecCandidates(), p = dpSpecTarget(), card = byId('dpSpecCard');
+    byId('dpSpecPrev').disabled = byId('dpSpecNext').disabled = c.length < 2;
+    card.replaceChildren();
+    if (!p) { card.textContent = dpL('Нет игроков для просмотра', 'No players to watch'); byId('dpSpecCount').textContent = ''; return; }
+    NET.spec.id = p.id;
+    byId('dpSpecCount').textContent = (c.findIndex(x => x.id === p.id) + 1) + '/' + c.length;
+    const hs = (NET.role === 'host' ? dpLiveStat(p.id) : p.hs) || {};
+    const cls = typeof CL !== 'undefined' && Array.isArray(CL) ? CL.find(x => x.id === p.cls) : null;
+    const top = document.createElement('div'); top.className = 'dps-top'; top.style.setProperty('--pc', p.color || '#ffb347');
+    const dot = document.createElement('span'); dot.className = 'dps-dot';
+    const nm = document.createElement('span'); nm.className = 'dps-name'; nm.textContent = (p.name || 'Игрок') + (cls && cls.n ? ' · ' + cls.n : '');
+    const bd = document.createElement('span'); bd.className = 'dps-badge' + (p.dead ? ' dead' : ''); bd.textContent = p.dead ? dpL('ПОГИБ', 'DEAD') : dpL('ЖИВ', 'ALIVE');
+    top.append(dot, nm, bd);
+    const hpm = Number(p.hpm) || 100, hp = Math.max(0, Number(p.hp) || 0);
+    const bar = document.createElement('div'); bar.className = 'dps-hp'; const fill = document.createElement('i');
+    fill.style.width = Math.max(0, Math.min(100, hp / hpm * 100)) + '%'; fill.style.background = hp / hpm < .3 ? '#ff3b30' : '#4ade80'; bar.appendChild(fill);
+    const st = document.createElement('div'); st.className = 'dps-stats';
+    const add = s => { const e = document.createElement('span'); e.textContent = s; st.appendChild(e); };
+    add(dpL('Здоровье: ', 'Health: ') + Math.round(hp) + '/' + hpm);
+    add(dpL('Помощь команде: ', 'Team help: ') + (hs.help == null ? '—' : hs.help + '%'));
+    add(dpL('Починок: ', 'Repairs: ') + (hs.rep || 0));
+    add(dpL('Уклонений: ', 'Dodges: ') + (hs.dod || 0));
+    add('+' + (hs.fc || 0) + ' FC');
+    if (p.dead) { const cc = DP_CAUSE[p.cause] || DP_CAUSE.other; add(dpL('Причина: ', 'Cause: ') + dpL(cc[0], cc[1])); }
+    card.append(top, bar, st);
+  }
+  window.setInterval(dpSpecRender, 250);
+  window.addEventListener('keydown', e => {
+    if (!dpSpecActive()) return;
+    const tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return;
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') { dpSpecStep(-1); e.preventDefault(); }
+    else if (e.code === 'ArrowRight' || e.code === 'KeyD') { dpSpecStep(1); e.preventDefault(); }
+  });
+  const dpSpecPrevDraw = draw;
+  draw = function() {
+    const r = dpSpecPrevDraw();
+    if (dpSpecActive()) {
+      const p = dpSpecTarget();
+      if (p) {
+        const x = p.host && NET.role === 'host' ? S.px : (Number.isFinite(p._renderX) ? p._renderX : p.x);
+        const px = Math.max(55, Math.min(850, Number(x) || 450));
+        X.save(); X.fillStyle = p.color || '#ffb347'; X.strokeStyle = '#000'; X.lineWidth = 2;
+        X.beginPath(); X.moveTo(px - 7, FLOOR - 120); X.lineTo(px + 7, FLOOR - 120); X.lineTo(px, FLOOR - 107); X.closePath(); X.stroke(); X.fill(); X.restore();
+      }
+    }
+    return r;
+  };
+  const dpSpecPrevClear = clearNetworkState;
+  clearNetworkState = function() { dpSpecPrevClear(); NET.spec = { id: '', hideDead: NET.spec ? NET.spec.hideDead : false }; NET.lastSeen = {}; const el = byId('dpSpec'); if (el) el.hidden = true; };
+
+  // ---------- privacy options ----------
+  NET.privIp = false; NET.privAnon = false; NET.anon = '';
+  try { const pv = JSON.parse(localStorage.getItem('dusty_net_priv') || '{}'); NET.privIp = !!pv.ip; NET.privAnon = !!pv.anon; } catch (_) {}
+  const dpIpBox = byId('netPrivIp'), dpAnBox = byId('netPrivAnon');
+  dpIpBox.checked = NET.privIp; dpAnBox.checked = NET.privAnon;
+  const dpSavePriv = () => {
+    NET.privIp = dpIpBox.checked; NET.privAnon = dpAnBox.checked; if (!NET.privAnon) NET.anon = '';
+    try { localStorage.setItem('dusty_net_priv', JSON.stringify({ ip: NET.privIp, anon: NET.privAnon })); } catch (_) {}
+  };
+  dpIpBox.addEventListener('change', dpSavePriv); dpAnBox.addEventListener('change', dpSavePriv);
+  const dpPrivPrevNick = currentNick;
+  currentNick = function() {
+    if (NET.privAnon) { if (!NET.anon) NET.anon = 'Игрок-' + (1000 + Math.floor(Math.random() * 9000)); return NET.anon; }
+    return dpPrivPrevNick();
+  };
+  const dpPrivPrevIce = resolveIceServers;
+  resolveIceServers = async function() {
+    const r = await dpPrivPrevIce.apply(this, arguments);
+    if (NET.privIp && /недоступен/i.test(String(r && r.source || ''))) throw new Error(dpL('Режим «Скрыть IP» требует TURN-сервер, а он сейчас недоступен. Отключите режим или повторите позже.', '"Hide my IP" needs a TURN server, which is unavailable right now. Turn it off or try later.'));
+    return r;
+  };
+  const dpPrivPrevClear = clearNetworkState;
+  clearNetworkState = function() { dpPrivPrevClear(); NET.anon = ''; };
+
 })();
+</script>
+<script>
+/* ====================== DUSTY PLANE: STORY CHAPTERS 2-6 ======================
+   Adventure engine (side-view walk-around scenes, cutscene sequencer) + chapters:
+   2 Survival in the forest, 3 Assembly, 4 Escape (coordinates), 5 Heist (stealth), 6 stub. */
+(function(){
+'use strict';
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const SPD=140, SC={};
+let A=null;
+const $=id=>document.getElementById(id);
+const hh=m=>String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(Math.floor(m%60)).padStart(2,'0');
+
+/* ---------- cutscene sequencer ---------- */
+function seq(list){A.q=list.slice();A.qs=null;A.lock=true}
+function seqRun(dt){
+  if(!A.q)return;
+  for(let g=0;g<24;g++){
+    const q=A.q;if(!q)return;
+    const s=q[0];if(!s){A.q=null;A.lock=false;return}
+    const k=s[0],st=A.qs||(A.qs={t:0,init:false});
+    if(!st.init){st.init=true;
+      if(k==='say')say(s[1],()=>{st.done=true});
+      else if(k==='fn'){s[1]();st.done=true}
+      else if(k==='fade'){st.from=A.fade;A.fadeIn=0}
+      else if(k==='title')A.title={t:s[1],a:0};
+    }
+    st.t+=dt;let done=false;
+    if(k==='say'||k==='fn')done=!!st.done;
+    else if(k==='wait')done=st.t>=s[1];
+    else if(k==='walk'){const a=A.act[s[1]],dx=s[2]-a.x,sp=(s[3]||1)*SPD;
+      if(Math.abs(dx)<=sp*dt+1){a.x=s[2];a.mv=0;done=true}else{a.x+=Math.sign(dx)*sp*dt;a.face=Math.sign(dx);a.mv=1;a.ph=(a.ph||0)+dt*8}}
+    else if(k==='fade'){A.fade=st.from+(s[1]-st.from)*Math.min(1,st.t/Math.max(.01,s[2]));done=st.t>=s[2]}
+    else if(k==='do')done=!!s[1](st.t,st);
+    else if(k==='title'){A.title.a=Math.min(1,st.t*2,(s[2]-st.t)*2);done=st.t>=s[2];if(done)A.title=null}
+    else if(k==='cam'){A.camT=s[1];done=true}
+    else if(k==='face'){A.act[s[1]].face=s[2];done=true}
+    else done=true;
+    if(!done)return;
+    if(A.q!==q){A.qs=null;return}
+    q.shift();A.qs=null;dt=0;
+  }
+}
+
+/* ---------- drawing helpers ---------- */
+function person(x,y,o){o=o||{};const f=o.face||1,col=o.col||'#4aa3ff',sw=o.mv?Math.sin(o.ph||0)*7:0,sit=!!o.sit,h=sit?34:46;
+  X.save();X.translate(x,y);if(o.lay){X.rotate(-Math.PI/2*f*.98);X.translate(0,-8)}
+  X.strokeStyle=o.pants||'#2a3550';X.lineWidth=5;X.lineCap='round';X.beginPath();
+  if(sit){X.moveTo(0,-14);X.lineTo(14*f,-14);X.lineTo(14*f,0)}else{X.moveTo(0,-20);X.lineTo(sw,0);X.moveTo(0,-20);X.lineTo(-sw,0)}X.stroke();
+  const th=h*.62;X.fillStyle=col;X.fillRect(-7,-20-th,14,th);
+  X.strokeStyle=col;X.lineWidth=4;X.beginPath();X.moveTo(0,-20-th+5);X.lineTo(8*f+sw*.6*f,-20-th*.45);X.stroke();
+  X.fillStyle=o.skin||'#f0c9a0';X.beginPath();X.arc(0,-20-th-8,8,0,6.283);X.fill();
+  if(o.hat){X.fillStyle=o.hat;X.fillRect(-8,-20-th-17,16,5)}
+  X.restore()}
+function fir(x,gy,h,c1,c2){X.fillStyle='#3b2a1c';X.fillRect(x-3,gy-h*.18,6,h*.18);
+  for(let i=0;i<4;i++){const w=h*(.34-i*.06),y=gy-h*.14-i*h*.2;X.fillStyle=i%2?c1:c2;X.beginPath();X.moveTo(x-w,y);X.lineTo(x+w,y);X.lineTo(x,y-h*.34);X.closePath();X.fill()}}
+function txt(s,x,y,sz,col,al){X.font=(sz>=14?'bold ':'')+sz+'px system-ui';X.fillStyle=col||'#fff';X.textAlign=al||'center';X.fillText(s,x,y)}
+function box(x,y,w,h,fill,stroke){X.fillStyle=fill;X.fillRect(x,y,w,h);if(stroke){X.strokeStyle=stroke;X.lineWidth=1.5;X.strokeRect(x,y,w,h)}}
+function bar(x,y,w,h,v,col,lbl){box(x,y,w,h,'rgba(0,0,0,.55)');X.fillStyle=col;X.fillRect(x+1,y+1,(w-2)*cl(v/100,0,1),h-2);if(lbl)txt(lbl,x+w/2,y+h-2,10,'#fff')}
+function light(x,y,r,a){(A.lights||(A.lights=[])).push({x,y,r,a:a==null?1:a})}
+function darkness(alpha){
+  if(!A.dk){A.dk=document.createElement('canvas');A.dk.width=W;A.dk.height=H}
+  const d=A.dk.getContext('2d');d.globalCompositeOperation='source-over';d.clearRect(0,0,W,H);
+  d.fillStyle='rgba(2,4,16,'+cl(alpha,0,.93)+')';d.fillRect(0,0,W,H);d.globalCompositeOperation='destination-out';
+  for(const l of A.lights||[]){const g=d.createRadialGradient(l.x,l.y,2,l.x,l.y,l.r);g.addColorStop(0,'rgba(0,0,0,'+l.a+')');g.addColorStop(1,'rgba(0,0,0,0)');d.fillStyle=g;d.fillRect(l.x-l.r,l.y-l.r,l.r*2,l.r*2)}
+  X.drawImage(A.dk,0,0)}
+
+/* ---------- DOM overlay for puzzle UIs ---------- */
+function openUI(html,setup){closeUI();const el=document.createElement('div');el.id='advUI';
+  el.innerHTML='<div class="advc">'+html+'<div class="advx"><button type="button" id="advClose">Закрыть (Esc)</button></div></div>';
+  document.body.appendChild(el);A.ui=el;el.querySelector('#advClose').onclick=closeUI;if(setup)setup(el)}
+function closeUI(){if(A&&A.ui){try{A.ui.remove()}catch(_){}A.ui=null}else{const e=$('advUI');if(e&&e.remove)e.remove()}}
+
+/* ---------- core loop ---------- */
+function begin(id,k){
+  const def=SC[id];if(!def)return;
+  S.ph='adv';S.dlg=null;S.task=null;S.msg='';S.msgT=0;S.item=null;S.inv=[];S.ev=null;S.jet=null;S.fc=0;
+  A=S.adv={id,def,k,w:def.w||900,gy:def.gy||340,cam:0,camT:'p',act:{},q:null,qs:null,lock:false,fade:1,title:null,t:0,hold:0,ui:null,obj:'',lights:[],diff:({vez:.7,easy:.85,normal:1,hard:1.25})[k]||1};
+  A.p=A.act.p={x:def.sx||200,face:1,mv:0,ph:0,col:'#4aa3ff'};A.minX=def.minX==null?30:def.minX;A.maxX=def.maxX==null?A.w-30:def.maxX;
+  try{music('off')}catch(_){}
+  PAD.classList.toggle('on',DEV==='mob');
+  def.init();
+}
+function inter(){return A.def.inter?A.def.inter():[]}
+function nearest(){let b=null,bd=1e9;for(const i of inter()){if(i.show===false)continue;const d=Math.abs(A.p.x-i.x);if(d<=(i.r||50)&&d<bd){bd=d;b=i}}return b}
+function aUpd(dt){
+  A.t+=dt;if(S.msgT<900)S.msgT-=dt;
+  const p=A.p;
+  if(A.q&&!S.dlg)seqRun(dt);else if(A.q&&S.dlg)seqRun(0);
+  if(A.def.tick)A.def.tick(dt);
+  const free=!A.lock&&!S.dlg&&!A.ui&&!A.stop;
+  p.mv=0;
+  if(free){
+    const cur=nearest();
+    if(cur&&cur.hold&&(K.KeyE||K.Space)){A.hold+=dt;A.holdI=cur;p.mv=0;if(A.hold>=cur.hold){A.hold=0;cur.f()}}
+    else{A.hold=0;A.holdI=null;
+      const dir=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0);
+      p.crouch=!!(K.ArrowDown||K.KeyS)&&!!A.def.stealth;
+      if(dir&&!p.hid&&!A.noMove){p.x=cl(p.x+dir*SPD*(p.crouch?.5:1)*(p.slow||1)*dt,A.minX,A.maxX);p.face=dir;p.mv=1;p.ph+=dt*(p.crouch?5:8)}}
+  }else A.hold=0;
+  for(const id in A.act){const a=A.act[id];if(a.mv&&id!=='p')a.ph=(a.ph||0)+dt*8}
+  // camera
+  const tg=A.camT==='p'?p.x:typeof A.camT==='number'?A.camT:(A.act[A.camT]?A.act[A.camT].x:p.x);
+  const want=cl(tg-W/2,0,Math.max(0,A.w-W));A.cam+=(want-A.cam)*Math.min(1,dt*5);if(Math.abs(want-A.cam)<.3)A.cam=want;
+  if(A.fade>0&&A.fadeIn){A.fade=Math.max(0,A.fade-dt*A.fadeIn)}
+}
+function aKey(c){
+  if(S.dlg){if(c==='Space'||c==='KeyE'||c==='Enter')nextD();return}
+  if(c==='Escape'){if(A.ui){closeUI();return}if(A.exitAsk){A.exitAsk=false;leave();return}A.exitAsk=true;toast('Нажмите Esc ещё раз, чтобы выйти в меню (прогресс главы сбросится)',3);return}
+  A.exitAsk=false;
+  if(A.lock||A.ui)return;
+  if(c==='KeyE'||c==='Space'){const i=nearest();if(i&&!i.hold){i.f();return}}
+  if(A.def.key)A.def.key(c);
+}
+function leave(){closeUI();A.q=null;S.ph='over';PAD.classList.remove('on');document.getElementById('menu').style.display='flex';showP('play');
+  document.getElementById('mt').textContent='Вы вышли из главы '+S.chn+'.';}
+function fail(msg){
+  closeUI();A.q=null;A.lock=true;
+  say([['Вы',msg]],()=>{A=null;over(false,msg)});}
+function finish(){closeUI();A.q=null;A.lock=false;finishChapter()}
+
+/* ---------- drawing ---------- */
+function aDraw(){
+  A.lights=[];
+  X.clearRect(0,0,W,H);
+  A.def.draw(A.cam);
+  if(A.def.hud)A.def.hud();
+  // prompt
+  const cur=!A.lock&&!S.dlg&&!A.ui?nearest():null;
+  if(cur){const sx=cur.x-A.cam;txt((cur.hold?'Удерживайте E: ':'E: ')+cur.label,cl(sx,110,W-110),A.gy-92+(cur.py||0),13,'#ffe08a');
+    if(cur.hold&&A.hold>0){box(sx-30,A.gy-84+(cur.py||0),60,6,'rgba(0,0,0,.6)');X.fillStyle='#ffd23f';X.fillRect(sx-29,A.gy-83+(cur.py||0),58*cl(A.hold/cur.hold,0,1),4)}}
+  if(A.obj)txt(A.obj,W/2,22,13,'#ffd23f');
+  if(S.msgT>0&&S.msg)txt(S.msg,W/2,52,14,'#fff');
+  if(A.fade>0){X.fillStyle='rgba(0,0,0,'+cl(A.fade,0,1)+')';X.fillRect(0,0,W,H)}
+  if(A.title){X.globalAlpha=A.title.a;txt(A.title.t,W/2,H/2,28,'#fff');X.globalAlpha=1}
+  if(S.dlg)drawDlg();
+}
+
+/* ====================== CHAPTER 2: SURVIVAL IN THE FOREST ====================== */
+const mixc=(a,b,t)=>'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';
+function quad(x,y,face,rider,wheel){X.save();X.translate(x,y);X.scale(face,1);
+  X.fillStyle='#222';for(const wx of[-24,22]){X.beginPath();X.arc(wx,-9,10,0,6.283);X.fill()}
+  X.fillStyle='#b3261e';X.fillRect(-32,-30,64,16);X.fillRect(-4,-40,34,12);X.fillStyle='#ddd';X.fillRect(26,-38,6,8);
+  X.restore();person(x-8*face,y-14,{face,col:'#6a8f3a',sit:true,hat:'#222'});
+  if(rider)person(x-26*face,y-14,{face,col:'#4aa3ff',sit:true})}
+function wolf(x,y,face,night){X.save();X.translate(x,y);X.scale(face,1);X.fillStyle='#55575c';X.beginPath();X.ellipse(0,-20,24,11,0,0,6.283);X.fill();
+  X.fillRect(-18,-14,5,14);X.fillRect(12,-14,5,14);X.beginPath();X.arc(26,-28,9,0,6.283);X.fill();X.fillStyle='#3d3f43';X.beginPath();X.moveTo(-22,-24);X.lineTo(-36,-34);X.lineTo(-24,-16);X.fill();
+  X.fillStyle=night?'#ffdf4a':'#111';X.fillRect(29,-31,3,3);X.restore()}
+function bear(x,y,face){X.save();X.translate(x,y);X.scale(face,1);X.fillStyle='#4a3524';X.beginPath();X.ellipse(0,-30,38,22,0,0,6.283);X.fill();X.fillRect(-26,-18,10,18);X.fillRect(16,-18,10,18);
+  X.beginPath();X.arc(38,-40,14,0,6.283);X.fill();X.fillStyle='#ffdf4a';X.fillRect(44,-44,3,3);X.restore()}
+
+SC.forest={w:3600,gy:340,sx:420,
+init(){
+  const f=A.f={min:0,hp:100,hun:85,thi:80,war:100,sick:0,bleed:0,
+    inv:{wood:0,berry:0,poison:0,raw:0,cooked:0,band:0,match:0,bottle:0,water:0,dirty:0,can:0,torch:0,blanket:0,knife:0},
+    looted:{wreck:0,jet:0},manual:false,fire:{x:820,min:0,lit:false},sh:{x:940,built:false},sleep:false,sleepLeft:0,
+    wolves:[],bear:null,wolfT:20,rs:{},rain:{on:false},trees:[],bush:[],snares:[],warned:{},lastHit:'',ended:false,flash:0,stars:[],far:[]};
+  for(let x=140;x<3500;x+=ri(70,150)){if(Math.abs(x-340)>110&&Math.abs(x-1330)>130&&Math.abs(x-880)>150&&(x<2250||x>2550))f.trees.push({x,w:3,h:ri(130,190)})}
+  [[1500,'b'],[1750,'b'],[2080,'r'],[2780,'b'],[3180,'r'],[3380,'b']].forEach(a=>f.bush.push({x:a[0],t:a[1],n:4,g:0}));
+  for(let i=0;i<60;i++)f.stars.push([ri(0,W),ri(0,200),Math.random()]);
+  for(let i=0;i<70;i++)f.far.push({x:i*60+ri(-15,15),h:ri(110,200)});
+  A.obj='Дожить до 00:00 четвёртого дня';
+  A.fadeIn=.8;A.camT='p';
+  seq([['say',[['Вы','Лес... Мой самолёт разбит, а чуть дальше лежит обломок истребителя FMRA. Пилоты наверняка мертвы.'],['Вы','Нужно продержаться три дня. Вода, еда, огонь, укрытие — по порядку.'],['Вы','Единственная надежда — Сэм. Он живёт где-то в этих лесах... если ещё помнит обо мне.']]],
+       ['fn',()=>{toast('Стрелки/A,D — идти · E — действие · 1–7 — еда и лечение · F, G, R, Q — действия у воды, костра, силки, факел',9);A.lock=false}]]);
+},
+inter(){
+  const f=A.f,I=f.inv,p=A.p,L=[];if(f.sleep)return L;
+  L.push({x:340,r:80,label:'Обыскать обломки своего самолёта',hold:3,show:!f.looted.wreck,f:()=>{f.looted.wreck=1;I.bottle=1;I.band++;I.blanket=1;toast('Найдено: фляга, бинт, одеяло',4);beep(520,.1)}});
+  L.push({x:1330,r:90,label:'Обыскать истребитель FMRA',hold:4,show:!f.looted.jet,f:()=>{f.looted.jet=1;I.match+=4;I.can+=2;I.band+=2;I.knife=1;f.manual=true;beep(520,.1);
+    say([['Вы','Пилоты погибли при падении. Простите...'],['Вы','Спички, пайки, бинты, нож. И памятка выживания: «Синие ягоды съедобны, красные ядовиты. Воду из реки кипятить. Огонь отпугивает зверей».']])}});
+  for(const t of f.trees)if(t.w>0&&Math.abs(t.x-p.x)<50)L.push({x:t.x,r:50,label:'Собрать хворост у ели',hold:I.knife?1.1:1.6,f:()=>{t.w--;I.wood++;beep(260,.05)}});
+  for(const b of f.bush)if(b.n>0)L.push({x:b.x,r:60,label:(b.t==='r'?'Красные ягоды':'Синие ягоды')+(f.manual?(b.t==='r'?' (ядовитые)':' (съедобные)'):''),hold:1.8,f:()=>{b.n--;I[b.t==='r'?'poison':'berry']++;beep(700,.05)}});
+  if(p.x>2300&&p.x<2500)L.push({x:p.x,r:200,label:'Пить из реки (F — набрать воду во флягу)',hold:2,f:()=>{drink(25,true)}});
+  const fi=f.fire;
+  if(!fi.lit)L.push({x:fi.x,r:80,label:'Развести костёр (3 хвороста + спичка)',hold:2.5,f:()=>{if(I.wood<3||I.match<1){toast('Нужно 3 хвороста и спичка',3);return}I.wood-=3;I.match--;fi.lit=true;fi.min=140;beep(400,.15);toast('Костёр разожжён',3)}});
+  else L.push({x:fi.x,r:90,label:'Костёр: E — хворост · F — кипятить воду · G — жарить мясо',f:()=>{if(I.wood<1){toast('Нет хвороста',2);return}I.wood--;fi.min=Math.min(300,fi.min+45);toast('Костёр: ещё '+Math.round(fi.min)+' мин',2)}});
+  if(!f.sh.built)L.push({x:f.sh.x,r:80,label:'Построить шалаш (6 хвороста)',hold:4,f:()=>{if(I.wood<6){toast('Нужно 6 хвороста',3);return}I.wood-=6;f.sh.built=true;toast('Шалаш готов: в нём можно спать',4);beep(330,.15)}});
+  else L.push({x:f.sh.x,r:80,label:'Лечь спать (время идёт быстрее)',f:()=>{sleepNow()}});
+  for(const s of f.snares)if(s.done)L.push({x:s.x,r:50,label:s.ready?'Забрать добычу из силка':'Силок пуст — убрать',f:()=>{if(s.ready){I.raw++;toast('В силке кролик: +1 сырое мясо',3)}f.snares.splice(f.snares.indexOf(s),1)}});
+  return L},
+key(c){
+  const f=A.f,I=f.inv,p=A.p;
+  if(f.sleep){if(c==='KeyE'||c==='Space'){f.sleep=false;A.noMove=false;toast('Вы проснулись',2)}return}
+  if(c==='KeyF'){
+    if(p.x>2300&&p.x<2500&&!(f.fire.lit&&Math.abs(p.x-f.fire.x)<130)){if(!I.bottle)toast('Нужна фляга (она в обломках самолёта)',3);else if(I.water+I.dirty>=3)toast('Фляга полна',2);else{I.dirty++;toast('Фляга: грязная вода — вскипятите на костре',3);beep(300,.1)}}
+    else if(f.fire.lit&&Math.abs(p.x-f.fire.x)<130){if(I.dirty<1)toast('Нет грязной воды для кипячения',3);else{I.dirty--;I.water++;toast('Вода вскипячена и безопасна',3);beep(600,.1)}}}
+  else if(c==='KeyG'&&f.fire.lit&&Math.abs(p.x-f.fire.x)<130){if(I.raw<1)toast('Нет сырого мяса',3);else{I.raw--;I.cooked++;toast('Мясо пожарено',3);beep(480,.1)}}
+  else if(c==='KeyR'){if(!I.knife)toast('Для силка нужен нож и 2 хвороста (нож у пилотов FMRA)',3);else if(I.wood<2)toast('Нужно 2 хвороста',3);else if(f.snares.length>=2)toast('Уже стоят два силка',3);else{I.wood-=2;f.snares.push({x:p.x,t:0,done:false,ready:false});toast('Силок поставлен — проверьте через пару часов',4)}}
+  else if(c==='KeyQ'){if(I.wood<1)toast('Нет хвороста',2);else if(!f.fire.lit)toast('Факел зажигают от костра',3);else if(Math.abs(p.x-f.fire.x)>140)toast('Подойдите к костру',2);else{I.wood--;I.torch=60;toast('Факел горит час: звери держатся подальше',4)}}
+  else if(c.startsWith('Digit'))useItem(+c.slice(5));
+},
+click(x,y){if(y>=394&&y<=432){const i=Math.floor((x-60)/110);if(i>=0&&i<7&&x>=60)useItem(i+1)}},
+tick(dt){
+  const f=A.f,I=f.inv,p=A.p;
+  if(f.ended||A.lock||S.dlg||A.ui)return;
+  const rate=f.sleep?10:1,dm=dt*.5*rate,dif=A.diff;f.min+=dm;
+  const abs=840+f.min,day=Math.floor(abs/1440)+1,mod=abs%1440,hour=mod/60;
+  if(!f.rs[day])f.rs[day]={s:ri(660,1100),l:ri(110,200),on:Math.random()<.7};
+  const rs=f.rs[day],ron=rs.on&&mod>=rs.s&&mod<rs.s+rs.l;if(ron!==f.rain.on){f.rain.on=ron;toast(ron?'Начался дождь: холоднее, костёр без укрытия гаснет быстрее':'Дождь закончился',4)}
+  if(f.warned.d!==day&&hour>=19.5){f.warned.d=day;toast('Темнеет. Нужны костёр, шалаш и запас хвороста',5)}
+  const sl=f.sleep?.5:1;
+  f.hun=cl(f.hun-dm*.07*dif*sl,0,100);f.thi=cl(f.thi-dm*.115*dif*sl,0,100);
+  const nearF=f.fire.lit&&Math.abs(p.x-f.fire.x)<200,covered=f.sh.built,night=hour>=19||hour<8;
+  let dw=night?-.16:.25;if(f.rain.on)dw-=.12;if(nearF)dw=(f.rain.on&&!covered)?.1:.55;
+  if(dw<0){dw*=dif;if(f.sleep&&covered)dw*=.5;if(I.blanket)dw*=.65}
+  f.war=cl(f.war+dm*dw,0,100);
+  let dh=0;if(f.hun<=0)dh-=.2;if(f.thi<=0)dh-=.35;if(f.war<=0)dh-=.3;if(f.sick>0)dh-=.1;if(f.bleed>0)dh-=.25;
+  if(!dh&&f.hun>40&&f.thi>40&&f.war>40)dh=.1;
+  f.hp=cl(f.hp+dm*dh,0,100);f.sick=Math.max(0,f.sick-dm*(f.thi>40?.7:.2));
+  if(f.fire.lit){f.fire.min-=dm*(f.rain.on&&!covered?3:1);if(f.fire.min<=0){f.fire.lit=false;toast('Костёр погас',3)}}
+  if(I.torch>0)I.torch=Math.max(0,I.torch-dm);
+  for(const b of f.bush){b.g+=dm;if(b.g>=180){b.g=0;if(b.n<4)b.n++}}
+  for(const s of f.snares){if(!s.done){s.t+=dm;if(s.t>=150){s.done=true;s.ready=Math.random()<.65}}}
+  // sleep
+  if(f.sleep){f.sleepLeft-=dm;if(f.sleepLeft<=0||(f.sleepStartNight&&hour>=7&&hour<8)||f.thi<4||f.hun<3){f.sleep=false;A.noMove=false;toast('Вы проснулись',3)}}
+  // animals
+  const dark=hour>=21||hour<5;f.wolfT-=dm;
+  if(!dark&&f.wolves.length&&hour>=6)f.wolves.length=0;
+  if(dark&&f.wolfT<=0){f.wolfT=ri(30,60);if(f.wolves.length<Math.min(3,1+day)){const x=cl(p.x+(Math.random()<.5?-1:1)*ri(500,760),60,A.w-60);f.wolves.push({x,cd:0,face:1});toast('Где-то рядом воет волк...',3)}}
+  if(dark&&!f.bear&&p.x>2650&&Math.random()<dm*.02){f.bear={x:cl(p.x+ri(450,650),60,A.w-60),cd:0,face:-1};toast('Тяжёлые шаги в темноте — медведь!',4)}
+  if(!dark&&f.bear&&hour>=6)f.bear=null;
+  const scaredAt=x=>(f.fire.lit&&Math.abs(x-f.fire.x)<250)||(I.torch>0&&Math.abs(x-p.x)<250);
+  const beasts=f.wolves.concat(f.bear?[f.bear]:[]);
+  for(const w of beasts){const dx=p.x-w.x,d=Math.abs(dx),big=w===f.bear;w.face=Math.sign(dx)||1;
+    if(f.sleep){if(d>200)w.x+=Math.sign(dx)*60*dt;else if(d<140)w.x-=Math.sign(dx)*60*dt}
+    else if(scaredAt(w.x)||scaredAt(p.x)&&d<300){w.x-=Math.sign(dx)*(big?90:110)*dt}
+    else{w.x+=Math.sign(dx)*(big?85:115)*dt;if(d<(big?40:28)){w.cd-=dt;if(w.cd<=0){w.cd=big?1.6:1.1;hurt(big?22:9,big?'медведь':'волки');if(Math.random()<(big?.7:.35))f.bleed=1}}}
+    w.x=cl(w.x,40,A.w-40)}
+  if(f.flash>0)f.flash-=dt;
+  if(f.hp<=0){const why=f.thi<=0?'от обезвоживания':f.hun<=0?'от голода':f.war<=0?'от холода':f.lastHit?'вас растерзали ('+f.lastHit+')':'от болезни и ран';A.lock=true;fail('Вы не пережили лес: погибли '+why+'.');return}
+  if(f.min>=3480&&!f.ended)endSeq();
+},
+draw(cam){
+  const f=A.f,I=f.inv,p=A.p,gy=A.gy,abs=840+f.min,hour=(abs%1440)/60;
+  const b=hour>=7&&hour<18?1:hour>=18&&hour<21?1-(hour-18)/3*.85:hour>=5&&hour<7?.15+(hour-5)/2*.85:.15;
+  const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,mixc([6,9,28],[96,160,214],b));g.addColorStop(1,mixc([20,26,52],[180,214,232],b));X.fillStyle=g;X.fillRect(0,0,W,H);
+  if(b<.6){X.fillStyle='rgba(255,255,255,'+(.8-b)+')';for(const s of f.stars)X.fillRect(s[0],s[1],1.5,1.5)}
+  const sx=((hour-6)/14)*W;if(hour>=6&&hour<20){X.fillStyle='#ffe9a0';X.beginPath();X.arc(sx,90-Math.sin((hour-6)/14*Math.PI)*50,22,0,6.283);X.fill()}
+  else{const mx=((hour+6)%24/12)*W;X.fillStyle='#e8eefc';X.beginPath();X.arc(mx%W,80,16,0,6.283);X.fill()}
+  for(const t of f.far){const x=t.x-cam*.35;if(x>-60&&x<W+60)fir(x,gy-6,t.h,'#1d3a30','#17302a')}
+  X.fillStyle='#2c4a2a';X.fillRect(0,gy,W,H-gy);X.fillStyle='#37603a';X.fillRect(0,gy,W,6);
+  // river
+  X.fillStyle='#2f6f9f';X.fillRect(2300-cam,gy-2,200,H);X.fillStyle='rgba(255,255,255,.25)';for(let i=0;i<5;i++)X.fillRect(2310-cam+((A.t*30+i*40)%180),gy+6+i*14,16,2);
+  X.fillStyle='#caa46a';X.fillRect(2290-cam,gy,10,H);X.fillRect(2500-cam,gy,10,H);
+  for(const t of f.trees){const x=t.x-cam;if(x<-80||x>W+80)continue;if(t.w>0)fir(x,gy,t.h,'#2d6a3a','#245c33');else{X.fillStyle='#3b2a1c';X.fillRect(x-6,gy-10,12,10)}}
+  // wrecks
+  let x=340-cam;X.fillStyle='#8a8f98';X.beginPath();X.moveTo(x-90,gy);X.lineTo(x-70,gy-38);X.lineTo(x+40,gy-46);X.lineTo(x+100,gy-14);X.lineTo(x+90,gy);X.fill();X.fillStyle='#575c66';X.fillRect(x-60,gy-26,60,10);X.fillStyle='#c44';X.fillRect(x+64,gy-34,10,6);
+  X.fillStyle='#6a6e77';X.beginPath();X.moveTo(x+110,gy);X.lineTo(x+130,gy-30);X.lineTo(x+150,gy);X.fill();
+  x=1330-cam;X.fillStyle='#3d4452';X.beginPath();X.moveTo(x-110,gy);X.lineTo(x-90,gy-24);X.lineTo(x+40,gy-34);X.lineTo(x+120,gy-6);X.lineTo(x+110,gy);X.fill();X.fillStyle='#d33';X.fillRect(x-30,gy-26,20,5);
+  person(x-130,gy,{lay:true,face:1,col:'#556b8a'});person(x+150,gy,{lay:true,face:-1,col:'#556b8a'});
+  // bushes, snares
+  for(const bs of f.bush){const bx=bs.x-cam;if(bx<-50||bx>W+50)continue;X.fillStyle='#2e5a2c';X.beginPath();X.arc(bx,gy-12,18,0,6.283);X.fill();X.fillStyle=bs.t==='r'?'#d62828':'#3a5bd9';for(let i=0;i<bs.n;i++)X.fillRect(bx-12+i*7,gy-18+(i%2)*6,4,4)}
+  for(const s of f.snares){X.strokeStyle='#d9c27a';X.lineWidth=2;X.beginPath();X.arc(s.x-cam,gy-4,9,0,6.283);X.stroke();if(s.done){txt(s.ready?'!':'·',s.x-cam,gy-16,14,s.ready?'#ffd23f':'#888')}}
+  // camp
+  x=f.sh.x-cam;if(f.sh.built){X.fillStyle='#5b4228';X.beginPath();X.moveTo(x-60,gy);X.lineTo(x,gy-70);X.lineTo(x+60,gy);X.closePath();X.fill();X.fillStyle='#2d6a3a';X.beginPath();X.moveTo(x-52,gy);X.lineTo(x,gy-60);X.lineTo(x+52,gy);X.closePath();X.fill()}
+  else{X.strokeStyle='rgba(255,255,255,.25)';X.setLineDash&&X.setLineDash([6,6]);X.strokeRect(x-50,gy-60,100,60);X.setLineDash&&X.setLineDash([])}
+  x=f.fire.x-cam;X.fillStyle='#444';for(let i=-2;i<=2;i++)X.fillRect(x+i*8-3,gy-5,6,5);
+  if(f.fire.lit){const fl=Math.sin(A.t*12)*2;X.fillStyle='#ff7a1a';X.beginPath();X.moveTo(x-12,gy-4);X.lineTo(x+fl,gy-34-fl);X.lineTo(x+12,gy-4);X.fill();X.fillStyle='#ffd23f';X.beginPath();X.moveTo(x-6,gy-4);X.lineTo(x+fl*.5,gy-22);X.lineTo(x+6,gy-4);X.fill();light(f.fire.x-cam,gy-20,270,1)}
+  else{X.fillStyle='#2a2a2a';X.fillRect(x-14,gy-6,28,3)}
+  // actors
+  for(const w of f.wolves)wolf(w.x-cam,gy,w.face,true);if(f.bear)bear(f.bear.x-cam,gy,f.bear.face);
+  for(const id in A.act){const a=A.act[id];if(id==='p'||id==='sam')continue;person(a.x-cam,gy,a)}
+  if(A.act.sam){const s=A.act.sam;quad(s.x-cam,gy,s.face,!!s.rider);if(!s.noLight){const hx=s.x-cam+s.face*40;light(hx,gy-30,230,1);X.fillStyle='rgba(255,240,170,.18)';X.beginPath();X.moveTo(hx,gy-30);X.lineTo(hx+s.face*300,gy-70);X.lineTo(hx+s.face*300,gy+10);X.closePath();X.fill()}}
+  if(!A.p.hidden&&!(A.act.sam&&A.act.sam.rider))person(p.x-cam,gy-(f.sleep?0:0),{face:p.face,col:p.col,mv:p.mv,ph:p.ph,lay:f.sleep});
+  if(I.torch>0)light(p.x-cam,gy-40,190,1);
+  if(f.rain.on){X.strokeStyle='rgba(170,200,235,.55)';X.lineWidth=1;X.beginPath();for(let i=0;i<70;i++){const rx=(i*97+A.t*400)%W,ry=(i*53+A.t*700)%H;X.moveTo(rx,ry);X.lineTo(rx-3,ry+12)}X.stroke()}
+  if(b<1)darkness((1-b)*.88);
+  if(f.flash>0){X.fillStyle='rgba(180,0,0,'+f.flash*.6+')';X.fillRect(0,0,W,H)}
+  if(f.sleep){X.fillStyle='rgba(0,0,10,.45)';X.fillRect(0,0,W,H);txt('Z z z...  E — проснуться',W/2,200,18,'#cfe')}
+},
+hud(){
+  const f=A.f,I=f.inv,abs=840+f.min,day=Math.floor(abs/1440)+1;
+  bar(12,12,150,13,f.hp,'#e5483d','Здоровье '+Math.round(f.hp));bar(12,28,150,13,f.hun,'#d8923a','Голод '+Math.round(f.hun));
+  bar(12,44,150,13,f.thi,'#3a9ee5','Жажда '+Math.round(f.thi));bar(12,60,150,13,f.war,'#e5cf3a','Тепло '+Math.round(f.war));
+  txt('День '+day+' · '+hh(abs),W-12,22,16,'#fff','right');
+  const left=Math.max(0,3480-f.min),st=[];if(f.sick>0)st.push('болезнь');if(f.bleed>0)st.push('кровотечение');if(f.rain.on)st.push('дождь');if(I.torch>0)st.push('факел');
+  txt('До спасения: '+Math.floor(left/60)+' ч '+Math.floor(left%60)+' мин'+(st.length?' · '+st.join(', '):''),W-12,40,11,'#ccd','right');
+  txt('Хворост '+I.wood+' · Спички '+I.match+' · Фляга '+(I.bottle?'да (чист. '+I.water+', гряз. '+I.dirty+')':'нет')+(I.knife?' · Нож':'')+(I.blanket?' · Одеяло':''),12,90,11,'#ccd','left');
+  const slots=[['berry','Ягоды'],['cooked','Жареное'],['can','Паёк'],['water','Вода'],['band','Бинт'],['raw','Сырое мясо'],['poison','Красные ягоды']];
+  slots.forEach((s,i)=>{const x=60+i*110;box(x,398,104,30,I[s[0]]>0?'rgba(20,30,50,.85)':'rgba(20,30,50,.45)',I[s[0]]>0?'#7fa4d6':'#3a4660');txt((i+1)+'  '+s[1]+': '+I[s[0]],x+52,418,11,I[s[0]]>0?'#fff':'#889')});
+}};
+function drink(v,river){const f=A.f;f.thi=cl(f.thi+v,0,100);beep(500,.08);if(river&&Math.random()<.6*A.diff+.05){f.sick=Math.max(f.sick,100);toast('Вода из реки без кипячения — вас мутит',4)}}
+function hurt(n,why){const f=A.f;f.hp=Math.max(0,f.hp-n);f.lastHit=why;f.flash=.35;beep(140,.15,.07)}
+function sleepNow(){const f=A.f,hour=((840+f.min)%1440)/60;if(hour>=8&&hour<18){toast('Днём не уснуть. Спите вечером или ночью',3);return}
+  f.sleep=true;A.noMove=true;f.sleepLeft=480;f.sleepStartNight=hour>=18||hour<7}
+function useItem(n){const f=A.f,I=f.inv;
+  const m=[['berry',()=>{f.hun=cl(f.hun+9,0,100);f.thi=cl(f.thi+2,0,100)}],['cooked',()=>{f.hun=cl(f.hun+35,0,100)}],['can',()=>{f.hun=cl(f.hun+45,0,100);f.thi=cl(f.thi+5,0,100)}],
+   ['water',()=>{f.thi=cl(f.thi+30,0,100)}],['band',()=>{f.bleed=0;f.hp=cl(f.hp+8,0,100)}],['raw',()=>{f.hun=cl(f.hun+18,0,100);if(Math.random()<.5){f.sick=Math.max(f.sick,90);toast('Сырое мясо: вас тошнит',3)}}],
+   ['poison',()=>{f.hun=cl(f.hun+4,0,100);f.sick=Math.max(f.sick,150);f.hp=Math.max(1,f.hp-8);toast('Ядовитые ягоды! Вам плохо',4)}]][n-1];
+  if(!m||f.sleep)return;if(I[m[0]]<1){toast('Нет такого предмета',2);return}I[m[0]]--;m[1]();beep(420,.06)}
+function endSeq(){const f=A.f;f.ended=true;f.wolves.length=0;f.bear=null;f.sleep=false;A.noMove=false;const p=A.p;
+  A.act.sam={x:cl(p.x+900,0,A.w),face:-1,mv:1,ph:0,rider:false};
+  seq([['fn',()=>{A.obj='';toast('Начался 4-й день. 00:00',4)}],['wait',1.2],['cam','sam'],['walk','sam',p.x+230,2.2],['cam','p'],['walk','sam',p.x+60,1],['fn',()=>{A.act.sam.mv=0;A.act.sam.face=-1;p.face=1}],
+    ['say',[['Сэм','Эй! Ты живой?! Залезай ко мне, быстро!'],['Вы','Сэм.... Наконец-то ты приехал!'],['Сэм','Держись крепче. Тут холодно и воют волки. Уезжаем!']]],
+    ['fn',()=>{A.act.sam.rider=true;A.act.sam.face=1}],['walk','sam',A.w+300,1.6],['fade',1,1.5],['wait',.5],['fn',()=>finish()]])}
+
+/* ====================== CHAPTER 3: ASSEMBLY ====================== */
+const ASM_T=1; // 1 = about an hour of real assembly work; lower it to shorten
+const COMP=['Каркас фюзеляжа','Левое крыло','Правое крыло','Хвостовое оперение','Левый двигатель','Правый двигатель','Топливная система','Бортовая проводка','Приборная панель','Кресла и салон','Обшивка','Шасси'];
+const SHELF=[250,500,750,1000],SH=[2,0,0,3,1,1,3,2,0,3,1,2],PAT=[['weld','bolt','wire'],['bolt','weld','bolt'],['wire','bolt','weld'],['weld','wire','bolt']];
+const STT={weld:90,bolt:80,wire:95},STL={weld:'Сварка узла',bolt:'Затяжка болтов',wire:'Прокладка проводки'};
+function planeB(x,y,n,sc){ // n = installed components (0..12)
+  X.save();X.translate(x,y);X.scale(sc||1,sc||1);
+  if(n>=12){X.fillStyle='#222';for(const wx of[-60,50]){X.beginPath();X.arc(wx,-2,9,0,6.283);X.fill()}X.fillRect(-62,-30,4,28);X.fillRect(48,-30,4,28)}
+  X.strokeStyle=n>=11?'#9aa6b2':'#c9b27a';X.lineWidth=4;
+  if(n>=1){X.beginPath();X.moveTo(-110,-60);X.lineTo(110,-62);X.lineTo(80,-30);X.lineTo(-100,-28);X.closePath();n>=11?(X.fillStyle='#b8c2cc',X.fill()):0;X.stroke();for(let i=-90;i<=90;i+=30){X.beginPath();X.moveTo(i,-61);X.lineTo(i-6,-29);X.stroke()}}
+  if(n>=2){X.fillStyle='#8a99a8';X.fillRect(-30,-70,70,7)}if(n>=3){X.fillRect(-30,-24,70,5)}
+  if(n>=4){X.fillStyle='#8a99a8';X.beginPath();X.moveTo(-110,-60);X.lineTo(-130,-96);X.lineTo(-92,-60);X.fill()}
+  if(n>=5){X.fillStyle='#555';X.fillRect(-34,-84,16,12)}if(n>=6){X.fillRect(18,-84,16,12)}
+  if(n>=8){X.strokeStyle='#e8c33a';X.lineWidth=1.5;X.beginPath();X.moveTo(-90,-52);X.lineTo(70,-50);X.stroke()}
+  if(n>=9){X.fillStyle='#6fb6e8';X.fillRect(54,-56,18,12)}
+  if(n>=10){X.fillStyle='#3b2f23';X.fillRect(-10,-52,9,12);X.fillRect(12,-52,9,12)}
+  X.restore()}
+function room(){const gy=A.gy;X.fillStyle='#6b5440';X.fillRect(0,0,W,gy);X.fillStyle='#8a6b4a';for(let i=0;i<W;i+=60)X.fillRect(i,0,3,gy);X.fillStyle='#3d2e22';X.fillRect(0,gy,W,H-gy);X.fillStyle='#2a1f16';X.fillRect(0,gy,W,6)}
+SC.build={w:900,gy:350,sx:300,
+init(){
+  const st=A.st={stage:'house',i:Math.min(11,SV.asm||0),carry:false,step:-1,mini:null,needSofa:false,doorOpen:false,runway:0,dream:null,beat:{}};
+  A.act.sam={x:520,face:-1,mv:0,col:'#6a8f3a',hat:'#222'};A.fadeIn=.8;
+  seq([['say',[['Сэм','Ну вот, ты в безопасности. Как самочувствие?'],['Вы','Жив... Спасибо, Сэм. Скажи, что нам теперь делать с моим самолётом?'],['Сэм','Обломки лежат в лесу, а в гараже полно инструментов и запчастей. Попробуем собрать что-нибудь, что взлетит.'],
+        ['Вы','Подожди. Как ты вообще меня нашёл?'],['Сэм','Я живу в этом лесу. А то, что ты контрабандист, я знал давно — мы же сами об этом говорили.'],['Вы','И ты не боишься связываться с криминалом?'],
+        ['Сэм','Лезть в криминал я не хочу. Но и бросить тебя не могу — просто помогу.'],['Сэм','Постараюсь свезти останки твоего самолёта, какие смогу, прямо в гараж. А ты отдохни, я пока схожу за пикапом.']]],
+       ['walk','sam',850,.9],['fn',()=>{delete A.act.sam;st.needSofa=true;A.obj='Сядьте на диван и отдохните'}]]);
+},
+inter(){const st=A.st,L=[];
+  if(st.stage==='house'){if(st.needSofa)L.push({x:640,r:90,label:'Сесть на диван',f:sofa});if(st.doorOpen)L.push({x:60,r:70,label:'Пройти в гараж',f:()=>toStage('garage')})}
+  if(st.stage==='garage'&&!st.mini&&st.i<12){
+    if(!st.carry)L.push({x:SHELF[SH[st.i]],r:70,label:'Взять: '+COMP[st.i],hold:1.2,f:()=>{st.carry=true;beep(400,.08)}});
+    else L.push({x:1400,r:110,label:'Установить: '+COMP[st.i],f:()=>{st.step=0;startMini()}});}
+  return L},
+tick(dt){const st=A.st;
+  if(st.stage==='garage'&&st.mini)miniTick(dt)},
+key(c){const st=A.st;if(st.stage==='garage'&&st.mini)miniKey(c)},
+draw(cam){const st=A.st,gy=A.gy;
+  if(st.stage==='dream')return drawDream();
+  if(st.stage==='house'){
+    room();X.fillStyle='#223a5a';X.fillRect(380,70,120,90);X.fillStyle='#f4efd0';X.beginPath();X.arc(450,100,12,0,6.283);X.fill();X.strokeStyle='#2a1f16';X.lineWidth=5;X.strokeRect(380,70,120,90);
+    X.fillStyle='#4a3524';X.fillRect(120,gy-120,90,120);X.fillStyle='#7a5a3a';for(let i=0;i<4;i++)X.fillRect(124,gy-112+i*28,82,4);
+    X.fillStyle='#5a3f2a';X.fillRect(340,gy-40,110,8);X.fillRect(350,gy-32,8,32);X.fillRect(432,gy-32,8,32);X.fillStyle='#e0b050';X.fillRect(380,gy-58,10,18);
+    X.fillStyle='#7a2e2e';X.fillRect(570,gy-48,140,48);X.fillRect(570,gy-76,140,30);X.fillStyle='#8f3a3a';X.fillRect(578,gy-44,60,30);X.fillRect(642,gy-44,60,30);
+    X.fillStyle='#3a2a1d';X.fillRect(820,gy-130,60,130);X.fillStyle='#e0b050';X.fillRect(868,gy-70,5,5);X.fillStyle='#2f2217';X.fillRect(20,gy-120,60,120);
+    light(450,gy-60,300,.55)}
+  else if(st.stage==='garage'){
+    X.fillStyle='#4a4f57';X.fillRect(0,0,W,gy);X.fillStyle='#3b4047';for(let i=0;i<A.w;i+=80)X.fillRect(i-cam,0,3,gy);X.fillStyle='#2d3036';X.fillRect(0,gy,W,H-gy);X.fillStyle='#1f2226';X.fillRect(0,gy,W,5);
+    X.fillStyle='#2f2217';X.fillRect(20-cam,gy-120,60,120);
+    for(const sx of SHELF){const x=sx-cam;X.fillStyle='#5b4228';X.fillRect(x-45,gy-90,90,6);X.fillRect(x-45,gy-50,90,6);X.fillRect(x-45,gy-90,5,90);X.fillRect(x+40,gy-90,5,90);X.fillStyle='#7d6a52';X.fillRect(x-35,gy-80,26,28);X.fillRect(x+8,gy-40,28,30)}
+    if(!st.carry&&st.i<12){const x=SHELF[SH[st.i]]-cam;X.fillStyle='#ffd23f';X.fillRect(x-14,gy-76,28,20);txt('▼',x,gy-100,16,'#ffd23f')}
+    X.fillStyle='#555a63';X.fillRect(1250-cam,gy-6,300,6);X.fillStyle='#7a6a4a';X.fillRect(1700-cam,gy-52,160,12);X.fillRect(1710-cam,gy-40,8,40);X.fillRect(1840-cam,gy-40,8,40);
+    planeB(1400-cam,gy-6,st.i+(st.step>=0&&st.mini?0:0),1.15)}
+  else if(st.stage==='outro'){
+    X.fillStyle='#7ab4e0';X.fillRect(0,0,W,gy);X.fillStyle='#4f7a3a';X.fillRect(0,gy-6,W,H);X.fillStyle='#6b6f76';X.fillRect(1050-cam,gy-4,950,18);
+    X.fillStyle='#4a4f57';X.fillRect(40-cam,gy-150,320,150);X.fillStyle='#2f2217';X.fillRect(60-cam,gy-110,110,110);
+    {const tk=A.takeoff||0,px=1500+(tk>1?(tk-1)*(tk-1)*45:0),py=gy-4-(tk>3?(tk-3)*(tk-3)*24:0);planeB(px-cam,py,st.runway>=3?12:st.runway*4,1.25);if(tk>0)A.camT=px}}
+  for(const id in A.act){const a=A.act[id];if(id==='pk'){const x=a.x-cam;X.fillStyle='#2d5a8a';X.fillRect(x-40,gy-34,80,24);X.fillRect(x-10,gy-52,36,20);X.fillStyle='#222';X.beginPath();X.arc(x-22,gy-10,9,0,6.283);X.arc(x+24,gy-10,9,0,6.283);X.fill();if(a.load){X.fillStyle='#8a99a8';X.fillRect(x-38,gy-46,34,12)}continue}person(a.x-cam,gy,a)}
+  if(!A.p.hidden)person(A.p.x-cam,gy,{face:A.p.face,col:A.p.col,mv:A.p.mv,ph:A.p.ph,sit:A.p.sit,carry:st.carry});
+  if(st.carry&&st.stage==='garage'){X.fillStyle='#c9a24a';X.fillRect(A.p.x-cam-9,gy-96,18,14)}
+},
+hud(){const st=A.st;
+  if(st.stage==='garage'){const m=st.mini,tot=(st.i+(m?(st.step+Math.min(1,m.prog))/3:0))/12;
+    bar(250,10,400,14,tot*100,'#6fb6e8','Сборка самолёта: '+COMP.filter((_,i)=>i<st.i).length+'/12 · '+Math.round(tot*100)+'%');
+    if(m)drawMini(m)}
+}};
+function toStage(s){const st=A.st;seq([['fade',1,.5],['fn',()=>setStage(s)],['fade',0,.5]])}
+function setStage(s){const st=A.st;st.stage=s;const p=A.p;p.sit=false;
+  if(s==='house'){A.w=900;A.gy=350;A.minX=30;A.maxX=870;p.x=640;p.face=-1;A.cam=0}
+  if(s==='garage'){A.w=2000;A.gy=350;A.minX=30;A.maxX=1950;p.x=140;p.face=1;A.cam=0;A.obj='Соберите самолёт: берите детали на полках и ставьте их на каркас';
+    if(st.i>=12)endBuild();else say([['Сэм','Всё, что удалось собрать, уже здесь. Берите деталь с полки, несите к каркасу и крепите. Не торопитесь — тут нужна точность.']])}
+  if(s==='outro'){A.w=2000;A.gy=350;A.minX=30;A.maxX=1950;p.x=300;p.face=1;A.cam=0;A.obj=''}
+}
+function sofa(){const st=A.st,p=A.p;st.needSofa=false;A.obj='';
+  seq([['walk','p',640],['fn',()=>{p.sit=true;p.face=-1}],['wait',1.2],['title','Усталость берёт своё...',2.5],['fade',1,1.5],['fn',()=>{st.stage='dream';st.dream=0;A.w=900;A.cam=0}],['fade',0,.6],
+   ['do',t=>{st.dream=t;return t>=3.2}],['say',[['FMRA','Цель в прицеле. Ракета пошла!'],['Вы','Нет-нет-нет... Давай, «Горе-1», держись!']]],['do',t=>{st.dream=3.2+t;return t>=3.6}],
+   ['fn',()=>{beep(120,.5,.1);A.flash=1}],['wait',.5],['fade',1,.3],['fn',()=>{st.stage='house';st.dream=null;A.flash=0;p.sit=true;A.act.sam={x:520,face:1,mv:0,col:'#6a8f3a',hat:'#222'}}],['fade',0,.8],
+   ['say',[['Сэм','Просыпайся! Пикап вернулся, всё, что смог, уже стоит в гараже. Иди туда.'],['Вы','Сэм... спасибо. Правда.'],['Сэм','Потом поблагодаришь. Работы много.']]],
+   ['fn',()=>{p.sit=false;st.doorOpen=true;A.obj='Идите в гараж (дверь слева)'}]])}
+function drawDream(){const st=A.st,t=st.dream||0;
+  const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#14082a');g.addColorStop(1,'#43205a');X.fillStyle=g;X.fillRect(0,0,W,H);
+  for(let i=0;i<30;i++){X.fillStyle='rgba(255,255,255,.6)';X.fillRect((i*131+t*20)%W,(i*71)%300,2,2)}
+  const by=Math.sin(t*3)*6,px=380;X.save();X.translate(px,220+by);X.fillStyle='#b9c2cc';X.beginPath();X.ellipse(0,0,120,24,0,0,6.283);X.fill();X.fillStyle='#8a99a8';X.beginPath();X.moveTo(-20,0);X.lineTo(-70,-60);X.lineTo(-40,-60);X.lineTo(20,0);X.fill();X.beginPath();X.moveTo(-20,6);X.lineTo(-70,60);X.lineTo(-40,60);X.lineTo(20,6);X.fill();
+  X.fillStyle='#6fb6e8';for(let i=0;i<5;i++)X.fillRect(-60+i*24,-10,14,9);X.restore();
+  const mx=1000-Math.min(t,6.6)/6.6*(1000-px-110);X.fillStyle='#ff6a3a';X.fillRect(mx,214+by,40,6);X.fillStyle='rgba(255,200,120,.6)';X.fillRect(mx+40,215+by,140,4);
+  if(Math.floor(t*3)%2===0&&t<6.8){txt('ТРЕВОГА: ПУСК РАКЕТЫ',W/2,60,22,'#ff5a4a')}
+  if(t>=6.6){X.fillStyle='rgba(255,255,255,'+Math.min(1,(t-6.6)*3)+')';X.fillRect(0,0,W,H)}}
+// ----- mini-games -----
+function startMini(){const st=A.st,pat=PAT[st.i%4],type=pat[st.step],T=STT[type]*ASM_T;A.noMove=true;
+  st.mini={type,T,prog:0,g:0,last:'',N:Math.max(6,Math.round(T/.6)),pos:0,seq:[],round:0,R:Math.max(3,Math.round(T/4.5))};if(type==='wire')newRound(st.mini)}
+function newRound(m){const L=3+Math.min(3,m.round>>1);m.seq=Array.from({length:L},()=>['L','R','U','D'][ri(0,3)]);m.pos=0}
+function miniTick(dt){const st=A.st,m=st.mini;if(!m||A.lock||S.dlg)return;
+  if(m.type==='weld'){m.g=cl(m.g+(K.KeyE||K.Space?1.1:-.9)*dt,0,1);const c=.5+.3*Math.sin(A.t*1.1+st.i);m.zc=c;m.prog=cl(m.prog+(Math.abs(m.g-c)<.1?dt/m.T:-dt/m.T*.35),0,1)}
+  if(m.prog>=1)miniDone()}
+function miniKey(c){const st=A.st,m=st.mini;if(!m)return;
+  const d=c==='ArrowLeft'||c==='KeyA'?'L':c==='ArrowRight'||c==='KeyD'?'R':c==='ArrowUp'||c==='KeyW'?'U':c==='ArrowDown'||c==='KeyS'?'D':'';if(!d)return;
+  if(m.type==='bolt'&&(d==='L'||d==='R')){if(d!==m.last){m.prog=Math.min(1,m.prog+1/m.N);m.last=d;beep(300+m.prog*300,.03,.03)}else m.prog=Math.max(0,m.prog-.5/m.N)}
+  if(m.type==='wire'){if(d===m.seq[m.pos]){m.pos++;beep(500+m.pos*60,.04,.03);if(m.pos>=m.seq.length){m.round++;m.prog=m.round/m.R;if(m.round<m.R)newRound(m)}}else{m.pos=0;beep(140,.08,.05);m.prog=Math.max(0,m.prog-.4/m.R)}}
+  if(m.prog>=1)miniDone()}
+function miniDone(){const st=A.st;beep(800,.12);st.step++;
+  if(st.step>=3){st.mini=null;st.i++;SV.asm=st.i;sv();st.carry=false;st.step=-1;A.noMove=false;toast('Установлено: '+COMP[st.i-1],3);
+    if(st.i>=12){endBuild();return}
+    if(st.i===3||st.i===6||st.i===9)say([['Сэм',st.i===3?'Принёс чай. Фюзеляж и крылья уже радуют глаз — так держать.':st.i===6?'Половина позади. Двигатели смотрятся отлично!':'Ещё немного. FMRA не дремлет, но мы успеем.']])}
+  else startMini()}
+function drawMini(m){const st=A.st;box(230,40,440,150,'rgba(10,14,26,.92)','#7fa4d6');
+  txt(COMP[st.i]+' — шаг '+(st.step+1)+'/3: '+STL[m.type],450,62,13,'#ffd23f');bar(250,70,400,12,m.prog*100,'#4ade80');
+  if(m.type==='weld'){const x0=250,w=400;box(x0,98,w,18,'rgba(255,255,255,.12)');X.fillStyle='rgba(74,222,128,.45)';X.fillRect(x0+((m.zc||.5)-.1)*w,98,.2*w,18);X.fillStyle='#ffb347';X.fillRect(x0+m.g*w-3,94,6,26);txt('Удерживайте E (или Space), чтобы держать шов в зелёной зоне',450,146,12,'#cde')}
+  if(m.type==='bolt'){txt('Поочерёдно нажимайте ← и →  (A / D)',450,112,14,'#fff');txt(m.last==='L'?'◀':m.last==='R'?'▶':'· ·',450,146,28,'#ffb347')}
+  if(m.type==='wire'){txt('Повторите порядок стрелками ('+(m.round+1)+'/'+m.R+')',450,104,12,'#cde');const ar={L:'←',R:'→',U:'↑',D:'↓'};m.seq.forEach((s,i)=>txt(ar[s],450+(i-(m.seq.length-1)/2)*40,146,28,i<m.pos?'#4ade80':'#fff'))}}
+function endBuild(){const st=A.st;A.noMove=false;A.obj='';SV.asm=12;sv();
+  seq([['say',[['Вы','Последняя гайка. Самолёт собран.']]],['fade',1,.8],['fn',()=>setStage('outro')],
+   ['fn',()=>{A.act.sam={x:700,face:-1,mv:0,col:'#6a8f3a',hat:'#222'};A.act.pk={x:520,face:1,load:false};A.p.x=250}],['fade',0,.8],
+   ['walk','p',620,.9],['say',[['Вы','Сэм! Я закончил.'],['Сэм','Быстро ты. Ладно, давай перевезём его на полосу — я как раз расчистил ровную площадку. Придётся по частям.']]],
+   ['cam','pk'],['fn',()=>{A.act.pk.load=true}],['walk','pk',1500,2],['fn',()=>{st.runway=1;A.act.pk.load=false}],['walk','pk',450,2.2],['fn',()=>{A.act.pk.load=true}],['walk','pk',1500,2],['fn',()=>{st.runway=2;A.act.pk.load=false}],
+   ['walk','pk',450,2.2],['fn',()=>{A.act.pk.load=true}],['walk','pk',1500,2],['fn',()=>{st.runway=3;A.act.pk.load=false}],['walk','pk',1300,1.5],['cam','p'],
+   ['fn',()=>{A.p.x=1380;A.act.sam.x=1330;A.act.pk.x=1250}],['wait',.8],
+   ['say',[['Вы','Спасибо тебе, Сэм. Я у тебя в долгу.'],['Сэм','Куда теперь?'],['Вы','Мне нужно пересечь границу, чтобы агентство FMRA от меня отстало.'],['Сэм','Тогда не теряй время. Удачи, друг.']]],
+   ['walk','p',1500,.8],['fn',()=>{A.p.hidden=true}],['wait',.6],['do',t=>{A.takeoff=t;return t>=6}],['fade',1,1.2],['fn',()=>{SV.asm=0;sv();finish()}]])}
+
+/* ====================== CHAPTER 4: ESCAPE (find the coordinates) ====================== */
+const LM=['ржавая радиовышка','старый маяк','плотина','руины храма'],LME=['📡','🗼','🏞️','🏛️'];
+const TASKS=[['freq','Настроить частоту маяка'],['cipher','Принять шифрованное сообщение'],['key','Найти ключ шифра в бортжурнале'],['coords','Расшифровать координаты (компьютер)'],['pin','Отметить цель на карте'],['hdg','Выставить курс по приборам'],['wx','Принять сводку погоды'],['qnh','Выставить давление на высотомере'],['lm','Опознать ориентир в бинокль'],['auto','Ввести полосу в автопилот']];
+const azim=(la0,lo0,la1,lo1)=>Math.round((Math.atan2((lo1-lo0)*Math.cos((la0+la1)/2*Math.PI/180),la1-la0)*180/Math.PI+360)%360);
+const dm=(d,m,ew)=>d+'°'+String(m).padStart(2,'0')+'′ '+ew;
+const note=s=>{if(!A.notes.includes(s))A.notes.push(s)};
+const cph=s=>String(s).split('').map(c=>(+c+A.T.key)%10).join('');
+SC.escape={w:1000,gy:350,sx:500,
+init(){
+  const T=A.T={lat:ri(8,19),latm:ri(10,59),lon:ri(96,118),lonm:ri(10,59),key:ri(2,8),lm:ri(0,3),qnh:ri(1002,1024),strip:'KR-'+ri(10,99)};
+  T.fq=ri(1190,1350)/10;do{T.wfq=ri(1190,1350)/10}while(Math.abs(T.wfq-T.fq)<1);
+  T.tl=T.lat+T.latm/60;T.tn=T.lon+T.lonm/60;
+  T.cl=T.tl-ri(25,45)/10*(Math.random()<.5?-1:1);T.cn=T.tn-ri(30,60)/10*(Math.random()<.5?-1:1);T.az=azim(T.cl,T.cn,T.tl,T.tn);
+  T.strips=[{id:T.strip,lat:T.tl,lon:T.tn}];
+  for(let g=0;T.strips.length<7&&g<400;g++){const la=T.tl+ri(-50,50)/10,lo=T.tn+ri(-70,70)/10,id='KR-'+ri(10,99);
+    if(T.strips.every(s=>s.id!==id&&Math.hypot(s.lat-la,(s.lon-lo)*.97)>1.8)&&Math.hypot(la-T.cl,lo-T.cn)>1)T.strips.push({id,lat:la,lon:lo})}
+  A.d={};TASKS.forEach(t=>A.d[t[0]]=false);A.notes=[];A.msg='';A.pin=null;A.fadeIn=.8;
+  A.obj='Определите координаты полосы и введите их в автопилот';
+  seq([['say',[['Вы','Мы в воздухе. Самолёт держится низко — так нас не видят радары. Кажется, лететь придётся долго.'],['Сэм','(по рации) Слышишь меня? Это Сэм. Маяк на нужной полосе передаёт координаты шифром. Всё, что нужно, — в бортжурнале.'],['Вы','Понял. Разберусь с радио, картой и приборами.']]]]);
+},
+inter(){return[{x:110,r:70,label:'Бинокль у иллюминатора',f:windowUI},{x:260,r:60,label:'Радио',f:radioUI},{x:420,r:60,label:'Компьютер',f:pcUI},{x:580,r:60,label:'Карта на столе',f:mapUI},{x:720,r:60,label:'Бортжурнал',f:journalUI},{x:860,r:70,label:'Приборная панель',f:dashUI}]},
+draw(){
+  const gy=A.gy,t=A.t,sh=Math.sin(t*3)*1.2;X.save();X.translate(0,sh);
+  X.fillStyle='#5a4636';X.fillRect(0,0,W,gy);X.fillStyle='#4a392b';for(let i=0;i<W;i+=50)X.fillRect(i,0,2,gy);X.fillStyle='#7d8590';for(const p of[[40,60],[300,40],[640,70],[900,50]]){X.fillRect(p[0],p[1],60,40);X.fillStyle='#4f565f';for(let k=0;k<4;k++)X.fillRect(p[0]+4+k*14,p[1]+4,3,3);X.fillStyle='#7d8590'}
+  X.fillStyle='#2e241c';X.fillRect(0,gy,W,H-gy);X.fillStyle='#1c1612';X.fillRect(0,gy,W,5);
+  // round window with passing jungle
+  X.save();X.beginPath();X.arc(110,150,52,0,6.283);X.clip();X.fillStyle='#8fc7e8';X.fillRect(40,90,140,120);X.fillStyle='#2f6a34';for(let i=-1;i<9;i++){const x=40+((i*30-t*60)%240+240)%240-20;X.beginPath();X.arc(x,205,26,0,6.283);X.fill()}X.restore();X.strokeStyle='#2a1f16';X.lineWidth=6;X.beginPath();X.arc(110,150,52,0,6.283);X.stroke();
+  // radio
+  X.fillStyle='#3d4452';X.fillRect(225,gy-86,70,56);X.fillStyle='#9fe0a0';X.fillRect(233,gy-78,54,14);X.fillStyle='#d8d8d8';X.beginPath();X.arc(250,gy-48,8,0,6.283);X.arc(272,gy-48,8,0,6.283);X.fill();X.fillStyle='#2a2f38';X.fillRect(235,gy-30,50,30);
+  // computer
+  X.fillStyle='#2a2f38';X.fillRect(385,gy-64,70,50);X.fillStyle=A.d.coords?'#4ade80':'#1a3a2a';X.fillRect(391,gy-58,58,36);X.fillStyle='#3a3f48';X.fillRect(380,gy-18,80,18);
+  // map table
+  X.fillStyle='#6b5036';X.fillRect(530,gy-36,100,8);X.fillRect(540,gy-28,8,28);X.fillRect(612,gy-28,8,28);X.fillStyle='#e8dcb0';X.fillRect(540,gy-44,80,10);
+  // journal shelf
+  X.fillStyle='#4a3524';X.fillRect(685,gy-110,70,6);X.fillRect(685,gy-70,70,6);X.fillStyle='#a33';X.fillRect(692,gy-104,10,34);X.fillStyle='#37a';X.fillRect(706,gy-104,10,34);X.fillStyle='#c9a24a';X.fillRect(722,gy-100,22,30);
+  // dash
+  X.fillStyle='#3d4452';X.fillRect(815,gy-96,90,70);X.fillStyle='#111';X.beginPath();X.arc(840,gy-66,17,0,6.283);X.arc(882,gy-66,17,0,6.283);X.fill();X.strokeStyle='#ffd23f';X.lineWidth=2;X.beginPath();X.moveTo(840,gy-66);X.lineTo(840+Math.sin(t)*10,gy-80);X.moveTo(882,gy-66);X.lineTo(886,gy-56);X.stroke();X.fillStyle='#f7e26b';X.fillRect(820,gy-124,22,18);
+  for(const s of this_inter())X.fillStyle='rgba(255,224,138,.35)',X.fillRect(s.x-3,gy+8,6,4);
+  person(A.p.x,gy,{face:A.p.face,col:A.p.col,mv:A.p.mv,ph:A.p.ph});X.restore();
+  light(450,200,520,.18);
+},
+hud(){
+  box(W-292,40,284,18+TASKS.length*15,'rgba(8,12,24,.72)','#3a4a6a');txt('Задачи',W-150,54,12,'#ffd23f');
+  TASKS.forEach((t,i)=>txt((A.d[t[0]]?'✔ ':'○ ')+t[1],W-284,72+i*15,11,A.d[t[0]]?'#7bdcb5':'#cdd','left'));
+  if(A.notes.length){const h=14+A.notes.length*14;box(8,40,320,h,'rgba(8,12,24,.72)','#3a4a6a');A.notes.forEach((n,i)=>txt(n,14,56+i*14,11,'#ffe9a0','left'))}
+}};
+function this_inter(){return SC.escape.inter()}
+// ---------- station UIs ----------
+function radioUI(){const T=A.T;
+  openUI('<h3>Радио</h3><p>Частота: <b id="rf">120.0</b> МГц</p><input type="range" id="rs" min="1180" max="1360" value="1200" style="width:100%"><div><button type="button" id="rm">−0.1</button> <button type="button" id="rp">+0.1</button></div><div id="rout" class="advbox">Шум в эфире…</div>',el=>{
+    const rs=el.querySelector('#rs'),rf=el.querySelector('#rf'),out=el.querySelector('#rout');
+    const upd=()=>{const f=rs.value/10;rf.textContent=f.toFixed(1);
+      if(Math.abs(f-T.fq)<.05){A.d.freq=A.d.cipher=true;A.msg='ШИР '+cph(String(T.lat).padStart(2,'0'))+' '+cph(String(T.latm).padStart(2,'0'))+' · ДОЛ '+cph(String(T.lon).padStart(3,'0'))+' '+cph(String(T.lonm).padStart(2,'0'));note('Шифр: '+A.msg);out.textContent='Маяк: «'+A.msg+'». Сообщение записано.'}
+      else if(Math.abs(f-T.wfq)<.05){A.d.wx=true;note('QNH (погода): '+T.qnh);out.textContent='Метеостанция: «Давление QNH '+T.qnh+' гектопаскалей».'}
+      else out.textContent='Шум в эфире… '+'▒▓░'.repeat(1+Math.floor(Math.random()*4))};
+    rs.oninput=upd;el.querySelector('#rm').onclick=()=>{rs.value=+rs.value-1;upd()};el.querySelector('#rp').onclick=()=>{rs.value=+rs.value+1;upd()};upd()})}
+function journalUI(){const T=A.T;const pg=[
+  ['Записка Сэма',`Маяк с нужной полосы передаёт на частоте ${T.fq.toFixed(1)} МГц. Погодная станция — на ${T.wfq.toFixed(1)} МГц.`,()=>{A.d.key=A.d.key;note('Маяк '+T.fq.toFixed(1)+' · погода '+T.wfq.toFixed(1)+' МГц')}],
+  ['Шифр рейса',`Каждая цифра в сообщении увеличена на ${T.key} (по модулю 10). Чтобы прочитать — вычти ${T.key} из каждой цифры.`,()=>{A.d.key=true;note('Ключ шифра: вычесть '+T.key)}],
+  ['Старая запись (устарела)',`Прошлый рейс: шифр +${T.key===9?1:T.key+1}, маяк ${(T.fq+2.3).toFixed(1)} МГц. Больше не действует.`,null],
+  ['Описание полосы',`У нужной полосы стоит ${LM[T.lm]}. Идентификатор полосы указан на карте рядом с её меткой.`,()=>{note('Ориентир у полосы: '+LM[T.lm])}]];
+  openUI('<h3>Бортжурнал</h3><div id="jt"></div><div id="jb" class="advbox"></div>',el=>{
+    const jt=el.querySelector('#jt'),jb=el.querySelector('#jb');
+    pg.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.textContent=p[0];b.onclick=()=>{jb.textContent=p[1];if(p[2])p[2]()};jt.appendChild(b)});jb.textContent='Выберите страницу.'})}
+function pcUI(){const T=A.T;
+  openUI('<h3>Компьютер</h3><div class="advbox" id="pm"></div><h4>Расшифровка</h4><div>Широта: <input id="a1" type="number" style="width:60px"> ° <input id="a2" type="number" style="width:60px"> ′ N</div><div>Долгота: <input id="a3" type="number" style="width:70px"> ° <input id="a4" type="number" style="width:60px"> ′ E</div><button type="button" id="ok">Проверить</button><div id="r1"></div><h4>Автопилот</h4><div>Код полосы: <input id="sid" type="text" placeholder="KR-00" style="width:90px"> <button type="button" id="go">Запустить автопилот</button></div><div id="r2"></div>',el=>{
+    el.querySelector('#pm').textContent=A.msg?'Принятое сообщение: '+A.msg:'Принятых сообщений нет (настройте радио на маяк).';
+    el.querySelector('#ok').onclick=()=>{const v=['a1','a2','a3','a4'].map(i=>+el.querySelector('#'+i).value),r=el.querySelector('#r1');
+      if(v[0]===T.lat&&v[1]===T.latm&&v[2]===T.lon&&v[3]===T.lonm){A.d.coords=true;note('Цель: '+dm(T.lat,T.latm,'N')+' '+dm(T.lon,T.lonm,'E'));r.textContent='Координаты верны. Нанесите их на карту.'}else r.textContent='Не совпадает. Проверьте ключ шифра и арифметику.'};
+    el.querySelector('#go').onclick=()=>{const r=el.querySelector('#r2'),miss=TASKS.filter(t=>t[0]!=='auto'&&!A.d[t[0]]).map(t=>t[1]);
+      if(miss.length){r.textContent='Не выполнено: '+miss[0]+(miss.length>1?' (+'+(miss.length-1)+')':'');return}
+      if(el.querySelector('#sid').value.trim().toUpperCase()!==T.strip){r.textContent='Такой полосы нет в базе. Сверьтесь с картой.';return}
+      A.d.auto=true;closeUI();landSeq()}})}
+function mapUI(){const T=A.T,la0=T.tl-6,lo0=T.tn-8,pct=(v,a,b)=>((v-a)/b*100).toFixed(2)+'%';
+  let h='<h3>Карта</h3><div id="mp" class="advmap" style="position:relative;width:100%;aspect-ratio:8/5;background:#1c3a2a;border:1px solid #6a86b8;cursor:crosshair">';
+  for(let i=1;i<16;i++)h+='<i style="position:absolute;left:'+(i/16*100)+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.12)"></i><b style="position:absolute;left:'+(i/16*100)+'%;bottom:0;font-size:9px;opacity:.6">'+Math.floor(lo0+i)+'</b>';
+  for(let i=1;i<12;i++)h+='<i style="position:absolute;top:'+(i/12*100)+'%;left:0;right:0;height:1px;background:rgba(255,255,255,.12)"></i><b style="position:absolute;top:'+(i/12*100)+'%;left:0;font-size:9px;opacity:.6">'+Math.floor(la0+12-i)+'</b>';
+  for(const s of T.strips)h+='<span style="position:absolute;left:'+pct(s.lon,lo0,16)+';top:'+(((la0+12-s.lat)/12)*100).toFixed(2)+'%;transform:translate(-50%,-50%);font-size:10px;color:#ffe08a">◆ '+s.id+'</span>';
+  h+='<span style="position:absolute;left:'+pct(T.cn,lo0,16)+';top:'+(((la0+12-T.cl)/12)*100).toFixed(2)+'%;transform:translate(-50%,-50%);font-size:14px">✈</span><span id="pin" style="position:absolute;display:none;transform:translate(-50%,-100%);color:#ff5a4a;font-size:16px">📍</span></div><div class="advbox" id="mo">Нажмите на карту, чтобы поставить метку. Значок ✈ — ваша позиция ('+dm(Math.floor(T.cl),Math.round((T.cl%1)*60),'N')+', '+dm(Math.floor(T.cn),Math.round((T.cn%1)*60),'E')+').</div>';
+  openUI(h,el=>{const mp=el.querySelector('#mp'),pin=el.querySelector('#pin'),mo=el.querySelector('#mo');
+    mp.onclick=e=>{const r=mp.getBoundingClientRect(),fx=(e.clientX-r.left)/r.width,fy=(e.clientY-r.top)/r.height,lon=lo0+fx*16,lat=la0+12-fy*12;
+      pin.style.display='block';pin.style.left=fx*100+'%';pin.style.top=fy*100+'%';
+      let b=null,bd=9;for(const s of T.strips){const d=Math.hypot(s.lat-lat,(s.lon-lon)*.97);if(d<bd){bd=d;b=s}}
+      let m='Метка: '+dm(Math.floor(lat),Math.round((lat%1)*60),'N')+' '+dm(Math.floor(lon),Math.round((lon%1)*60),'E')+'. ';
+      if(b&&bd<1.0){m+='Ближайшая полоса: '+b.id+', курс на неё из вашей позиции — '+azim(T.cl,T.cn,b.lat,b.lon)+'°.';if(b.id===T.strip&&bd<.8){A.d.pin=true;note('Цель на карте: '+b.id+', курс '+T.az+'°')}}
+      else m+='Рядом нет полос.';mo.textContent=m}})}
+function dashUI(){const T=A.T;
+  openUI('<h3>Приборная панель</h3><div>Курс: <b id="hv">0</b>° <input type="range" id="hs" min="0" max="359" value="0" style="width:60%"><div><button type="button" id="h1">−5</button> <button type="button" id="h2">−1</button> <button type="button" id="h3">+1</button> <button type="button" id="h4">+5</button></div></div><div>Давление (QNH): <input id="q" type="number" value="1013" style="width:80px"> гПа</div><button type="button" id="ok">Подтвердить настройки</button><div id="r" class="advbox"></div>',el=>{
+    const hs=el.querySelector('#hs'),hv=el.querySelector('#hv'),sync=()=>{hv.textContent=hs.value};hs.oninput=sync;
+    [['#h1',-5],['#h2',-1],['#h3',1],['#h4',5]].forEach(b=>el.querySelector(b[0]).onclick=()=>{hs.value=(+hs.value+b[1]+360)%360;sync()});
+    el.querySelector('#ok').onclick=()=>{const r=el.querySelector('#r'),d=Math.abs(((+hs.value-T.az+540)%360)-180),q=+el.querySelector('#q').value,o=[];
+      if(d<=4){A.d.hdg=true;o.push('Курс принят.')}else o.push('Курс не совпадает с направлением на полосу (его показывает карта).');
+      if(Math.abs(q-T.qnh)<=1){A.d.qnh=true;o.push('Давление принято.')}else o.push('Высотомер врёт: давление не совпадает со сводкой.');r.textContent=o.join(' ')}})}
+function windowUI(){const T=A.T;
+  openUI('<h3>Бинокль</h3><p>Впереди по курсу виднеется ориентир. Что это?</p><div id="lb"></div><div id="lr" class="advbox"></div>',el=>{
+    LM.forEach((n,i)=>{const b=document.createElement('button');b.type='button';b.textContent=LME[i]+' '+n;b.onclick=()=>{const r=el.querySelector('#lr');if(i===T.lm){A.d.lm=true;r.textContent='Совпадает с описанием из бортжурнала.'}else r.textContent='Не похоже на описание полосы из бортжурнала.'};el.querySelector('#lb').appendChild(b)})})}
+function landSeq(){seq([['say',[['Вы','Курс, давление и ориентир подтверждены. Автопилот ведёт нас к полосе.'],['Сэм','(по рации) Удачи, друг. Садись тихо.']]],['fade',1,1.4],['wait',.4],['fn',()=>finish()]])}
+
+/* ====================== CHAPTER 5: HEIST (stealth) + CHAPTER 6 stub ====================== */
+function palm(x,gy,h){X.strokeStyle='#4a3524';X.lineWidth=7;X.beginPath();X.moveTo(x,gy);X.quadraticCurveTo(x+14,gy-h*.5,x+4,gy-h);X.stroke();X.fillStyle='#1f5a2c';for(const a of[-2.6,-2,-1.2,-.5,.2]){X.beginPath();X.moveTo(x+4,gy-h);X.quadraticCurveTo(x+4+Math.cos(a)*40,gy-h+Math.sin(a)*30-10,x+4+Math.cos(a)*70,gy-h+Math.sin(a)*40+16);X.quadraticCurveTo(x+4+Math.cos(a)*40,gy-h+Math.sin(a)*30+4,x+4,gy-h);X.fill()}}
+function night(){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#050a1c');g.addColorStop(1,'#16284a');X.fillStyle=g;X.fillRect(0,0,W,H);X.fillStyle='rgba(255,255,255,.7)';for(let i=0;i<50;i++)X.fillRect((i*173)%W,(i*59)%190,1.5,1.5);X.fillStyle='#e8eefc';X.beginPath();X.arc(760,70,16,0,6.283);X.fill()}
+const HIDE=[640,1000,1350,1650,2040],BOT=[780,1550,2300],LOCK=[2100,2180,2260,2340,2420];
+function guardDef(id,x,mn,mx,sp){return{id,x,min:mn,max:mx,sp,dir:1,face:1,state:'patrol',seen:0,wait:0,invX:0,x0:x}}
+SC.heist={w:1800,gy:350,sx:100,stealth:true,
+init(){
+  const st=A.st={stage:'land',uni:false,lk:ri(0,4),bottles:0,taken:{},radio:0,cp:120,pend:[],gB:false,emp:[]};
+  A.p.hidden=true;A.pl={x:-150,y:60};A.fadeIn=.8;
+  seq([['title','Глава 5. Кража',2.4],['say',[['Вы','Закрытая полоса в тропиках. Здесь меня никто не ждёт... надеюсь.']]],
+    ['do',t=>{const k=Math.min(1,t/6.5);A.pl.x=-150+k*1050;A.pl.y=60+(A.gy-64)*Math.pow(k,1.6);return t>=6.7}],
+    ['fn',()=>{A.p.x=A.pl.x+30;A.p.hidden=false;A.p.face=1}],['wait',.6],['say',[['Вы','Ну вот и тропики. Дальше — пешком.']]],
+    ['walk','p',1700,1],['fade',1,1.2],['title','Штаб FMRA',2],['fn',()=>setH('stealth')],['fade',0,.8],
+    ['say',[['Вы','Мне нужен камуфляж...']]],['fn',()=>{A.obj='Проберитесь в здание, переоденьтесь в форму агента FMRA и войдите в серверную'}]]);
+},
+inter(){const st=A.st,p=A.p,L=[];if(st.stage!=='stealth')return L;
+  HIDE.forEach(x=>L.push({x,r:45,label:p.hid?'Выйти из укрытия':'Спрятаться',f:()=>{p.hid=!p.hid;beep(220,.05)},show:p.hid?Math.abs(p.x-x)<46:true}));
+  BOT.forEach((x,i)=>{if(!st.taken[i])L.push({x,r:45,label:'Подобрать бутылку',f:()=>{st.taken[i]=1;st.bottles++;toast('Бутылка: Q — бросить, чтобы отвлечь охрану',3)}})});
+  if(!st.radio)L.push({x:700,r:50,label:'Включить радио (отвлечь охрану)',f:()=>{st.radio=1;noise(700,720);beep(700,.4,.06);toast('Радио орёт на весь склад',3)}});
+  LOCK.forEach((x,i)=>{if(!(st.opened&&st.opened[i]))L.push({x,r:36,label:'Открыть шкафчик',hold:.9,f:()=>openLocker(i)})});
+  L.push({x:3200,r:60,label:'Войти в серверную №4',f:()=>{if(!st.uni){toast('Доступ только для агентов в форме FMRA',3);return}startHall()}});
+  return L},
+key(c){const st=A.st;if(st.stage!=='stealth')return;
+  if(c==='KeyQ'||c==='KeyF'){if(st.bottles<1){toast('Нет предмета для броска',2);return}if(A.p.hid)return;st.bottles--;const tx=cl(A.p.x+A.p.face*300,40,A.w-40);st.pend.push({t:.55,x:tx});beep(300,.05)}},
+tick(dt){const st=A.st,p=A.p;if(st.stage!=='stealth'||A.lock||S.dlg||A.ui)return;
+  for(const n of st.pend){n.t-=dt;if(n.t<=0&&!n.done){n.done=true;noise(n.x,620);beep(900,.08,.06)}}st.pend=st.pend.filter(n=>!n.done);
+  if(p.x>520&&st.cp<560)st.cp=560;if(p.x>1250&&st.cp<1300)st.cp=1300;if(p.x>2000&&st.cp<2020)st.cp=2020;if(p.x>2500&&st.cp<2520)st.cp=2520;
+  for(const g of st.guards){
+    if(g.state==='patrol'){if(g.wait>0){g.wait-=dt}else{g.x+=g.dir*g.sp*dt;g.face=g.dir;if(g.x<=g.min||g.x>=g.max){g.x=cl(g.x,g.min,g.max);g.dir*=-1;g.wait=1.4}}}
+    else{const dx=g.invX-g.x;if(Math.abs(dx)>4){g.x+=Math.sign(dx)*95*dt;g.face=Math.sign(dx)}else{g.wait-=dt;if(g.wait<=-3.5){g.state='patrol';g.wait=0}else if(Math.floor(A.t*1.2)%2===0)g.face*=1}}
+    const vis=!st.uni&&!p.hid;
+    if(vis){const dx=(p.x-g.x)*g.face,rng=p.crouch?130:240;if(dx>-15&&dx<rng)g.seen+=dt*(dx<90?2.4:1);else g.seen=Math.max(0,g.seen-dt*.9)}else g.seen=Math.max(0,g.seen-dt);
+    if(g.seen>=1.2){caught();return}
+    if(st.uni&&g.id==='B'&&!st.gB&&Math.abs(p.x-g.x)<80){st.gB=true;seq([['say',[['Охранник','Агент? Здесь закрытая зона.'],['Вы','Допуск в приказе. Не задерживайте — я спешу.'],['Охранник','...Проходите.']]]])}
+  }
+},
+draw(cam){const st=A.st,gy=A.gy,p=A.p;
+  if(st.stage==='land'){night();for(let i=0;i<8;i++)palm(120+i*240-cam,gy,150+(i%3)*30);X.fillStyle='#1d3a22';X.fillRect(0,gy,W,H-gy);X.fillStyle='#4a4f57';X.fillRect(0,gy-3,W,12);
+    if(A.pl)planeB(A.pl.x-cam,A.pl.y,12,1.3);if(!p.hidden)person(p.x-cam,gy,{face:p.face,col:p.col,mv:p.mv,ph:p.ph});return}
+  if(st.stage==='stealth')return drawStealth(cam);
+  if(st.stage==='hall')return drawHall(cam);
+  if(st.stage==='out')return drawOut(cam)},
+hud(){const st=A.st;if(st.stage==='stealth'){txt('Бутылки: '+st.bottles+' (Q — бросить) · ↓/S — красться'+(st.uni?' · Форма надета ✔':''),12,22,11,'#cde','left');
+    if(st.guards.some(g=>g.seen>0)){const m=Math.max(...st.guards.map(g=>g.seen));bar(350,70,200,10,Math.min(100,m/1.2*100),'#ff5a4a','Вас замечают!')}}}};
+function noise(x,r){for(const g of A.st.guards||[]){if(Math.abs(g.x-x)<r){g.state='investigate';g.invX=cl(x,g.min-260,g.max+260);g.wait=0}}}
+function openLocker(i){const st=A.st,p=A.p;st.opened=st.opened||{};st.opened[i]=1;
+  if(i===st.lk){seq([['say',[['Вы','Форма агента FMRA. Как раз мой размер.']]],['fn',()=>{beep(600,.15)}],['wait',1.2],['fn',()=>{st.uni=true;p.col='#3d5a3a';p.hat='#2a3a2a';A.obj='Войдите в серверную комнату (дверь в конце офиса)'}],['say',[['Вы','Теперь я — один из них. Осталось дойти до серверной.']]]])}
+  else toast(['Пусто.','Чьи-то носки...','Только старый журнал.','Комиксы и бутерброд.','Тут тоже пусто.'][i%5],2.5)}
+function caught(){const st=A.st,p=A.p;if(A.lock)return;
+  seq([['say',[['Охранник','Стой! Нарушитель!']]],['fade',1,.6],['fn',()=>{p.x=st.cp;p.hid=false;for(const g of st.guards){g.x=g.x0;g.state='patrol';g.seen=0;g.wait=0;g.dir=1}st.pend=[]}],['fade',0,.6],['say',[['Вы','Меня заметили... Придётся действовать тише.']]]])}
+function setH(s){const st=A.st,p=A.p;st.stage=s;
+  if(s==='stealth'){A.w=3300;A.minX=30;A.maxX=3250;p.x=120;p.face=1;A.cam=0;p.hidden=false;A.def.stealth=true;
+    st.guards=[guardDef('C',900,760,1180,55),guardDef('A',1700,1450,1900,60),guardDef('B',2950,2850,3050,40)];st.guards[1].dir=-1;
+    st.emp=[2650,2760,2870].map((x,i)=>({x,col:['#8a6a3a','#5a6a8a','#7a4a5a'][i],ph:i*2}))}
+  if(s==='hall'){A.w=1600;A.minX=30;A.maxX=1550;p.x=60;p.face=1;A.cam=0;A.obj='';p.hid=false}
+  if(s==='out'){A.w=2000;A.minX=30;A.maxX=1950;p.x=200;p.face=1;A.cam=0;A.obj=''}}
+function drawStealth(cam){const st=A.st,gy=A.gy,p=A.p;
+  night();for(let i=0;i<3;i++)palm(80+i*190-cam,gy,140+i*20);
+  X.fillStyle='#1d3a22';X.fillRect(0,gy,W,H-gy);
+  // building (500..3300)
+  const bx=520-cam;X.fillStyle='#39414d';X.fillRect(bx,gy-190,A.w,190);X.fillStyle='#2c323c';X.fillRect(bx,gy,A.w,H-gy);
+  const rooms=[[520,1250,'Склад','#3b3a36'],[1250,2000,'Коридор','#3a4350'],[2000,2500,'Раздевалка','#3a4a48'],[2500,3300,'Офис','#44485a']];
+  for(const r of rooms){X.fillStyle=r[3];X.fillRect(r[0]-cam,gy-185,r[1]-r[0],185);X.fillStyle='rgba(255,255,255,.08)';X.fillRect(r[0]-cam,gy-185,3,185);txt(r[2],(r[0]+r[1])/2-cam,gy-165,12,'rgba(255,255,255,.35)')}
+  X.fillStyle='#555';X.fillRect(500-cam,gy-100,24,100);txt('Техдверь',512-cam,gy-108,10,'#bbb');
+  for(let x=140;x<500;x+=30){X.fillStyle='#777';X.fillRect(x-cam,gy-70,3,70)}X.fillStyle='#777';X.fillRect(140-cam,gy-70,360,2);
+  // props
+  for(const x of HIDE){X.fillStyle='#5a4228';X.fillRect(x-18-cam,gy-46,36,46);X.fillStyle='#7a5a38';X.fillRect(x-14-cam,gy-42,28,6)}
+  for(let i=0;i<3;i++)if(!st.taken[i]){X.fillStyle='#7bdcb5';X.fillRect(BOT[i]-4-cam,gy-18,8,18)}
+  X.fillStyle='#333';X.fillRect(690-cam,gy-30,22,30);X.fillStyle=st.radio?'#ffd23f':'#999';X.fillRect(694-cam,gy-26,14,8);
+  LOCK.forEach(x=>{X.fillStyle='#6a7280';X.fillRect(x-22-cam,gy-96,44,96);X.fillStyle='#3a4048';X.fillRect(x-16-cam,gy-88,32,4)});
+  for(const e of st.emp){X.fillStyle='#5a4228';X.fillRect(e.x-30-cam,gy-30,60,6);X.fillRect(e.x-26-cam,gy-24,6,24);X.fillStyle='#223';X.fillRect(e.x+4-cam,gy-52,20,16);person(e.x-cam,gy-6,{sit:true,face:1,col:e.col,ph:e.ph})}
+  X.fillStyle='#223a8a';X.fillRect(3170-cam,gy-110,60,110);txt('СЕРВЕРНАЯ №4',3200-cam,gy-118,10,'#9bf');
+  // guards + cones
+  for(const g of st.guards){const x=g.x-cam;
+    X.fillStyle='rgba(255,230,120,'+(g.state==='investigate'?.2:.12)+')';X.beginPath();X.moveTo(x+g.face*6,gy-52);X.lineTo(x+g.face*(p.crouch?130:240),gy-84);X.lineTo(x+g.face*(p.crouch?130:240),gy);X.closePath();X.fill();
+    person(x,gy,{face:g.face,col:'#2a2f3a',pants:'#1a1d24',hat:'#111',mv:g.state==='investigate'||g.wait<=0,ph:A.t*8});
+    if(g.seen>0)txt('!',x,gy-84,22,'#ff5a4a');else if(g.state==='investigate')txt('?',x,gy-84,20,'#ffd23f')}
+  if(!p.hid)person(p.x-cam,gy+(p.crouch?0:0),{face:p.face,col:p.col,hat:p.hat,mv:p.mv,ph:p.ph,sit:false,crouch:p.crouch});else txt('(вы прячетесь)',p.x-cam,gy-60,11,'#9ce');
+  for(const n of st.pend)txt('•',n.x-cam,gy-60,16,'#fff');
+  if(st.radio&&A.t%1<.5)txt('♪',700-cam,gy-48,16,'#ffd23f')}
+function startHall(){const st=A.st,p=A.p;
+  seq([['fade',1,.6],['fn',()=>setH('hall')],['fade',0,.7],['say',[['Вы','Огромный зал. Десятки компьютеров, десятки сотрудников. В форме на меня никто не смотрит.']]],
+    ['walk','p',1050,.85],['say',[['Вы','Свободный терминал. То, что нужно.']]],['fn',()=>{p.sit=true;st.term=0}],
+    ['do',t=>{st.term=t;return t>=8}],['say',[['Вы','Готово. Пропуск на борт сформирован. Теперь — на выход, пока никто не пригляделся.']]],
+    ['fn',()=>{p.sit=false;st.term=null}],['walk','p',60,1],['fade',1,.8],['fn',()=>setH('out')],['fade',0,.8],
+    ['say',[['Вы','Мой самолёт остаётся в джунглях. Он своё отлетал.']]],['walk','p',1200,.9],
+    ['say',[['Сотрудник','Агент? Борт Boeing подготовлен. Вы в списке на вылет, проходите.'],['Вы','Благодарю. Лететь нужно срочно.']]],
+    ['walk','p',1520,.9],['fn',()=>{p.hidden=true}],['wait',.6],['do',t=>{A.boe=t;return t>=5}],['fade',1,1.2],['fn',()=>finish()]])}
+function drawHall(cam){const st=A.st,gy=A.gy,p=A.p;
+  X.fillStyle='#2c313b';X.fillRect(0,0,W,gy);X.fillStyle='#1c2028';X.fillRect(0,gy,W,H-gy);X.fillStyle='rgba(120,160,255,.08)';for(let i=0;i<A.w;i+=160)X.fillRect(i-cam,0,2,gy);
+  for(let i=0;i<10;i++){const x=150+i*150-cam,free=i===6;X.fillStyle='#4a3a28';X.fillRect(x-40,gy-34,80,6);X.fillRect(x-36,gy-28,6,28);X.fillStyle='#10161e';X.fillRect(x-18,gy-70,36,28);X.fillStyle=free?'#4ade80':'#3a6aa8';X.fillRect(x-15,gy-67,30,22);
+    if(!free)person(x-4,gy-4,{sit:true,face:1,col:['#8a6a3a','#5a6a8a','#7a4a5a','#6a8a5a'][i%4],ph:i,mv:false})}
+  if(!p.hidden)person(p.x-cam,gy,{face:p.face,col:p.col,hat:p.hat,sit:p.sit,mv:p.mv,ph:p.ph});
+  if(st.term!=null&&st.term>0){box(280,60,340,150,'rgba(4,10,6,.93)','#4ade80');
+    const L=['> ВХОД: AGENT-7741','> КЛЮЧ ДОСТУПА: ************','> ЗАПРОС: BOEING 747-8F, ВЫЛЕТ СРОЧНО','> СТАТУС: РАЗРЕШЕНИЕ ВЫДАНО','> ПРОПУСК НА БОРТ: СФОРМИРОВАН','> ЖУРНАЛ ОПЕРАЦИИ: УДАЛЁН'];
+    let n=Math.floor(st.term*14);L.forEach((l,i)=>{const s=l.slice(0,Math.max(0,n));n-=l.length+2;txt(s,292,86+i*22,12,'#7dff9a','left')})}}
+function drawOut(cam){const gy=A.gy,p=A.p,tk=A.boe||0;night();X.fillStyle='#2a3a2a';X.fillRect(0,gy,W,H-gy);X.fillStyle='#4a4f57';X.fillRect(0,gy-3,W,16);
+  for(let i=0;i<4;i++)palm(60+i*70-cam,gy,130);
+  planeB(150-cam,gy-4,12,.9);X.fillStyle='rgba(30,70,30,.5)';X.beginPath();X.arc(150-cam,gy-30,70,0,6.283);X.fill();
+  // Boeing
+  const bx=1500-cam+(tk>1?(tk-1)*(tk-1)*40:0),by=gy-4-(tk>3?(tk-3)*(tk-3)*20:0);X.fillStyle='#e8ecf2';X.beginPath();X.ellipse(bx,by-50,170,36,0,0,6.283);X.fill();X.fillStyle='#c8cfd8';X.beginPath();X.moveTo(bx-20,by-44);X.lineTo(bx-90,by-4);X.lineTo(bx-50,by-4);X.lineTo(bx+40,by-44);X.fill();X.beginPath();X.moveTo(bx-140,by-70);X.lineTo(bx-170,by-130);X.lineTo(bx-120,by-70);X.fill();
+  X.fillStyle='#3a6aa8';for(let i=0;i<14;i++)X.fillRect(bx-120+i*16,by-58,8,8);X.fillStyle='#222';X.fillRect(bx-60,by-14,6,12);X.fillRect(bx+40,by-14,6,12);
+  light(1500-cam,gy-60,300,.6);
+  person(1220-cam,gy,{face:-1,col:'#d98a2b',hat:'#d98a2b'});
+  if(!p.hidden)person(p.x-cam,gy,{face:p.face,col:p.col,hat:p.hat,mv:p.mv,ph:p.ph});
+  if(tk>0)A.camT=1500+(tk>1?(tk-1)*(tk-1)*40:0)}
+/* ---------- chapter 6 stub ---------- */
+SC.meet={w:900,gy:350,sx:450,init(){A.fadeIn=.8;A.p.hidden=true;
+  seq([['title','Глава 6. Встреча',2.6],['say',[['Вы','Boeing набирает высоту. Впереди — встреча, которой я боялся и которую ждал.'],['Вы','(Продолжение следует: эта глава будет доработана в следующем обновлении.)']]],['fade',1,1.2],['fn',()=>finish()]])},
+  draw(){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#050a1c');g.addColorStop(1,'#26305f');X.fillStyle=g;X.fillRect(0,0,W,H);X.fillStyle='#e8ecf2';X.beginPath();X.ellipse(450+Math.sin(A.t)*6,220,120,20,0,0,6.283);X.fill()}};
+
+/* ---------- wiring into the game ---------- */
+(function(){const css=document.createElement('style');css.textContent='#advUI{position:fixed;inset:0;z-index:2147482500;display:grid;place-items:center;background:rgba(0,0,0,.62);font-family:system-ui,sans-serif;color:#f4ecdc}.advc{width:min(580px,94vw);max-height:92vh;overflow:auto;box-sizing:border-box;padding:16px 18px;border-radius:14px;background:#141b2b;border:1px solid #6a86b8}.advc h3,.advc h4{margin:6px 0}.advc button{margin:4px 4px 4px 0;padding:8px 12px;border-radius:9px;border:1px solid #6a86b8;background:#22304a;color:#fff;cursor:pointer}.advc input{padding:6px;border-radius:7px;border:1px solid #6a86b8;background:#0d1320;color:#fff}.advbox{margin:8px 0;padding:10px;border-radius:9px;background:#0d1320;border:1px solid #2c3a56;min-height:2.4em;font-size:.9rem}.advx{text-align:right;margin-top:8px}';document.head.appendChild(css)})();
+const live=()=>S&&S.ph==='adv'&&A&&S.adv===A;
+const hook=(n,f)=>{const o=window[n];window[n]=function(...a){return f(o,a)}};
+hook('upd',(o,a)=>{if(live()){aUpd(a[0]);return}return o.apply(null,a)});
+hook('draw',(o,a)=>{if(live()){aDraw();return}return o.apply(null,a)});
+hook('key',(o,a)=>{if(live()){aKey(a[0]);return}return o.apply(null,a)});
+hook('start',(o,a)=>{const r=o.apply(null,a);const c=MODE==='st'?CH[CHS-1]:null;if(c&&c.adv&&SC[c.adv])begin(c.adv,a[0]);return r});
+C.addEventListener('pointerdown',e=>{if(!live()||!A.def.click||A.ui)return;const r=C.getBoundingClientRect();A.def.click((e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height)});
+window.__storyTest={SC,begin,get A(){return A},aUpd,aDraw,aKey,seqRun};
+})();
+
 </script>
 
 </body></html>
